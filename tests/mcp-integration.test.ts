@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { startBridge, type Bridge } from "../src/bridge/server.js";
@@ -76,22 +77,25 @@ afterAll(async () => {
 });
 
 describe("MCP tools over Streamable HTTP", () => {
-  it("lists all nine read-only tools", async () => {
+  it("lists read tools and separately scoped mutation tools", async () => {
     const { tools } = await client.listTools();
     const names = tools.map((tool) => tool.name).sort();
     expect(names).toEqual([
+      "apply_patch",
       "execution_output",
       "execution_summary",
       "git_diff",
       "git_status",
       "list_directory",
       "read_file",
+      "read_image",
+      "run_command",
       "search_workspace",
       "test_status",
       "workspace_info",
+      "write_file",
     ]);
-    // no write tools in V1
-    for (const forbidden of ["write_file", "delete_file", "execute_shell", "git_commit", "install_package"]) {
+    for (const forbidden of ["delete_file", "execute_shell", "git_commit", "install_package"]) {
       expect(names).not.toContain(forbidden);
     }
 
@@ -129,6 +133,71 @@ describe("MCP tools over Streamable HTTP", () => {
     const result = await client.callTool({ name: "read_file", arguments: { path: "hello.txt" } });
     const file = structuredJsonOf<{ content: string; totalLines: number }>(result);
     expect(file.content).toContain("Hello from Codex with ChatGPT!");
+  });
+
+  it("read-only tokens cannot mutate files or execute commands", async () => {
+    for (const [name, args] of [
+      ["write_file", { path: "unauthorized.txt", content: "no" }],
+      ["apply_patch", { path: "src/index.ts", edits: [{ old_text: "43", new_text: "44" }] }],
+      ["run_command", { command: "echo no" }],
+    ] as const) {
+      const result = await client.callTool({ name, arguments: args });
+      expect(result.isError).toBe(true);
+      expect(textOf(result)).toContain("INSUFFICIENT_SCOPE");
+    }
+    expect(fs.existsSync(path.join(root, "unauthorized.txt"))).toBe(false);
+  });
+
+  it("explicit write and execute scopes support the complete workflow", async () => {
+    const token = bridge.authStore.issueTokens({ clientId: "writer", scopes: ["workspace.write", "workspace.execute"] });
+    const writer = new Client({ name: "writer", version: "1" });
+    await writer.connect(new StreamableHTTPClientTransport(new URL(`${bridge.localBaseUrl()}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token.accessToken}` } } }));
+    try {
+      expect((await writer.callTool({ name: "write_file", arguments: { path: "test-output/note.txt", content: "hello" } })).isError).not.toBe(true);
+      expect((await writer.callTool({ name: "apply_patch", arguments: { path: "test-output/note.txt", edits: [{ old_text: "hello", new_text: "verified" }] } })).isError).not.toBe(true);
+      expect(fs.readFileSync(path.join(root, "test-output/note.txt"), "utf8")).toBe("verified");
+      const result = await writer.callTool({ name: "run_command", arguments: { command: "echo c2c-execution-ok" } });
+      expect(result.isError).not.toBe(true);
+      expect(jsonOf(result).output).toContain("c2c-execution-ok");
+    } finally { await writer.close(); }
+  });
+
+  it("read_image returns a decodable image block with transparency and bounded dimensions", async () => {
+    await sharp({ create: { width: 3000, height: 1000, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 0.5 } } })
+      .png().toFile(path.join(root, "art.png"));
+    const result = await client.callTool({ name: "read_image", arguments: { path: "art.png", max_edge: 1024 } });
+    expect(result.isError).not.toBe(true);
+    const blocks = result.content as { type: string; data?: string; mimeType?: string }[];
+    const image = blocks.find((block) => block.type === "image")!;
+    expect(image.mimeType).toBe("image/png");
+    const metadata = await sharp(Buffer.from(image.data!, "base64")).metadata();
+    expect(metadata.width).toBe(1024);
+    expect(metadata.height).toBe(341);
+    expect(metadata.hasAlpha).toBe(true);
+    expect(metadata.exif).toBeUndefined();
+  });
+
+  it("read_image enforces the same workspace boundary and sensitive-file policy", async () => {
+    for (const [file, error] of [["../../outside.png", "PATH_OUTSIDE_WORKSPACE"], [".env", "ACCESS_DENIED_SENSITIVE_FILE"],
+      ["missing.png", "FILE_NOT_FOUND"], ["src", "NOT_A_FILE"], ["hello.txt", "UNSUPPORTED_IMAGE"]]) {
+      const result = await client.callTool({ name: "read_image", arguments: { path: file } });
+      expect(result.isError).toBe(true);
+      expect(textOf(result)).toContain(error);
+      expect((result.content as { type: string }[]).some((block) => block.type === "image")).toBe(false);
+    }
+  });
+
+  it("read_image requires workspace.read", async () => {
+    const token = bridge.authStore.issueTokens({ clientId: "no-images", scopes: ["git.read"] });
+    const reader = new Client({ name: "no-images", version: "1" });
+    await reader.connect(new StreamableHTTPClientTransport(new URL(`${bridge.localBaseUrl()}/mcp`), {
+      requestInit: { headers: { authorization: `Bearer ${token.accessToken}` } },
+    }));
+    try {
+      const result = await reader.callTool({ name: "read_image", arguments: { path: "art.png" } });
+      expect(result.isError).toBe(true);
+      expect(textOf(result)).toContain("INSUFFICIENT_SCOPE");
+    } finally { await reader.close(); }
   });
 
   it("read_file denies .env with ACCESS_DENIED_SENSITIVE_FILE and no content", async () => {

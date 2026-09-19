@@ -7,6 +7,7 @@ import { startBridge } from "../bridge/server.js";
 import { findBridgeObservation, findLiveBridge, type RuntimeState } from "../bridge/runtime.js";
 import { adminFetch, ensureBridge, stopBridge } from "../process/daemon.js";
 import { Workspace } from "../workspace/manager.js";
+import { importImage } from "../workspace/import-image.js";
 import { AuthStore } from "../auth/store.js";
 import { detectTunnelBinaries } from "../tunnel/detect.js";
 import {
@@ -1245,6 +1246,20 @@ function handleCliError(error: unknown, json: boolean): void {
   }
   process.exitCode = 1;
 }
+
+program.command("import-image")
+  .description("Save a browser-downloaded image into this workspace (local Codex only, never overwrites)")
+  .option("-w, --workspace <path>")
+  .requiredOption("--source <path>", "Local image downloaded/exported through the browser")
+  .requiredOption("--dest <path>", "Workspace-relative destination image path")
+  .option("--json", "machine-readable output", false)
+  .action(async (opts: { workspace?: string; source: string; dest: string; json: boolean }) => {
+    try {
+      const result = await importImage(new Workspace(resolveWorkspace(opts.workspace)), opts.source, opts.dest);
+      if (opts.json) say(JSON.stringify(result));
+      else check(`图片已保存：${result.path}`);
+    } catch (error) { handleCliError(error, opts.json); }
+  });
 
 program.parseAsync(process.argv).catch((error: Error) => {
   cross(error.message);

@@ -54,6 +54,7 @@ export function parseQuickTunnelUrl(line: string): string | null {
 
 export interface CloudflaredQuickTunnelOptions {
   startTimeoutMs?: number;
+  initialHealthDelayMs?: number;
   spawnImpl?: (
     command: string,
     args: string[],
@@ -73,6 +74,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
   private url: string | null = null;
   private lastError: string | null = null;
   private readonly startTimeoutMs: number;
+  private readonly initialHealthDelayMs: number;
   private readonly spawnImpl: NonNullable<CloudflaredQuickTunnelOptions["spawnImpl"]>;
   private readonly fetchImpl: NonNullable<CloudflaredQuickTunnelOptions["fetchImpl"]>;
   private starting: Promise<string> | null = null;
@@ -83,7 +85,8 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
     private readonly binaryOverride?: string,
     options: CloudflaredQuickTunnelOptions = {}
   ) {
-    this.startTimeoutMs = options.startTimeoutMs ?? 45_000;
+    this.startTimeoutMs = options.startTimeoutMs ?? 75_000;
+    this.initialHealthDelayMs = options.initialHealthDelayMs ?? 20_000;
     this.spawnImpl = options.spawnImpl ?? ((command, args, spawnOptions) => spawn(command, args, spawnOptions));
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
   }
@@ -191,6 +194,11 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
       const waitForHealth = async (): Promise<void> => {
         const publicUrl = candidateUrl;
         if (!publicUrl) return;
+        // Quick Tunnel DNS may lag its announcement. An immediate lookup can
+        // negatively cache the new hostname before it has propagated.
+        if (this.initialHealthDelayMs > 0) {
+          await new Promise((resolveWait) => setTimeout(resolveWait, this.initialHealthDelayMs));
+        }
         while (!settled) {
           if (!isAlive()) {
             fail(new Error("cloudflared exited before the public health endpoint became ready"));
@@ -217,7 +225,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
       timeout = setTimeout(() => {
         if (!settled) {
           this.logger.error(`Quick tunnel did not become ready within ${this.startTimeoutMs}ms`);
-          fail(new Error("Tunnel start timed out"));
+          fail(new Error(`Tunnel start timed out${this.lastError ? `: ${this.lastError}` : ""}`));
         }
       }, this.startTimeoutMs);
 
@@ -227,6 +235,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
           const url = parseQuickTunnelUrl(line);
           if (url && !candidateUrl) {
             candidateUrl = url;
+            this.logger.debug(`Quick tunnel address announced: ${url}`);
             void waitForHealth().catch((error) => {
               this.logger.error(`Quick tunnel health check failed: ${String(error)}`);
             });
@@ -235,6 +244,7 @@ export class CloudflaredQuickTunnel implements TunnelProvider {
             this.lastError = line.slice(0, 400);
             this.logger.debug(`cloudflared: ${line.slice(0, 400)}`);
           }
+          if (/Registered tunnel connection/.test(line)) this.logger.debug(`cloudflared: ${line.slice(0, 400)}`);
         });
       };
       if (child.stdout) scan(child.stdout);

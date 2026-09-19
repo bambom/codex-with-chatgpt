@@ -48,6 +48,7 @@ function setupTunnel(fetchImpl: FetchImpl, startTimeoutMs = 1_000) {
     spawnImpl,
     fetchImpl,
     startTimeoutMs,
+    initialHealthDelayMs: 0,
   });
   return { child, spawnImpl, tunnel };
 }

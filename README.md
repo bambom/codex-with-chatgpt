@@ -1,5 +1,16 @@
 # Codex with ChatGPT
 
+## Fork extensions
+
+This fork is maintained at https://github.com/bambom/codex-with-chatgpt.git.
+It adds image previews and local image import ([image workflow](docs/images.md)),
+plus separately authorized `write_file`, `apply_patch` and `run_command` tools
+([write and execution setup](docs/writing.md)). Commands run with the host user's
+privileges, not in a sandbox. Existing read-only tokens remain read-only.
+Image export/import and file read/write/patch/command execution were verified;
+ChatGPT visual understanding of connector image responses remains unverified.
+The original workflow below describes the default read-only mode.
+
 > ChatGPT thinks. Codex works.
 > ChatGPT 负责思考，Codex 负责干活。
 
@@ -43,7 +54,7 @@ Detailed docs below are in English · 详细中文文档见 **[README.zh-CN.md](
 
 1. 环境自检：需要 git 和 Node.js ≥ 20，缺什么就自动安装
   （macOS 用 Homebrew，Windows 用 winget），同时安装 cloudflared。
-2. 下载：把 https://github.com/XiaoDuoYa/codex-with-chatgpt 克隆到
+2. 下载：把 https://github.com/bambom/codex-with-chatgpt.git 克隆到
    ~/codex-with-chatgpt（已存在就 git pull 更新）。
 3. 构建：在该目录里执行 corepack pnpm install 和 corepack pnpm build。
 4. 安装 Skill：把仓库里的 skill/SKILL.md 复制到
@@ -69,7 +80,7 @@ I am a non-technical user — do everything yourself:
 1. Check the environment: git and Node.js >= 20 must be available. Install
    anything missing yourself (macOS: Homebrew, Windows: winget). Also install
    cloudflared.
-2. Download: clone https://github.com/XiaoDuoYa/codex-with-chatgpt into
+2. Download: clone https://github.com/bambom/codex-with-chatgpt.git into
    ~/codex-with-chatgpt (if it already exists, git pull to update).
 3. Build: inside that folder run `corepack pnpm install` then `corepack pnpm build`.
 4. Install the Skill: copy skill/SKILL.md to

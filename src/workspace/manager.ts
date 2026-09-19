@@ -13,6 +13,8 @@ export type WorkspaceErrorCode =
   | "NOT_A_FILE"
   | "NOT_A_DIRECTORY"
   | "BINARY_FILE"
+  | "UNSUPPORTED_IMAGE"
+  | "INVALID_IMAGE"
   | "FILE_TOO_LARGE";
 
 export class WorkspaceError extends Error {

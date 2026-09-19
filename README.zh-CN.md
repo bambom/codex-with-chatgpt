@@ -1,5 +1,14 @@
 # Codex with ChatGPT
 
+## 本分支新增功能
+
+维护仓库：https://github.com/bambom/codex-with-chatgpt.git。
+新增图片预览和本地图片导入，见[图片操作说明](docs/images.md)；新增单独授权的
+`write_file`、`apply_patch`、`run_command`，见[写入和执行配置](docs/writing.md)。
+命令使用电脑账户权限运行，没有系统沙箱隔离；已有只读授权不会自动升级。
+图片保存以及文件读取、写入、修改、命令执行已验证；网页对连接器图片的实际视觉
+理解尚未通过验证。下方原有流程描述的是默认只读模式。
+
 [English](README.md) | **简体中文**
 
 > ChatGPT 负责思考，Codex 负责干活。
@@ -27,7 +36,7 @@ Agent（Codex），然后去倒杯咖啡：
 
 1. 环境自检：需要 git 和 Node.js ≥ 20，缺什么就自动安装
   （macOS 用 Homebrew，Windows 用 winget），同时安装 cloudflared。
-2. 下载：把 https://github.com/XiaoDuoYa/codex-with-chatgpt 克隆到
+2. 下载：把 https://github.com/bambom/codex-with-chatgpt.git 克隆到
    ~/codex-with-chatgpt（已存在就 git pull 更新）。
 3. 构建：在该目录里执行 corepack pnpm install 和 corepack pnpm build。
 4. 安装 Skill：把仓库里的 skill/SKILL.md 复制到

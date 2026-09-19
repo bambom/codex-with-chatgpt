@@ -179,6 +179,9 @@ that close the tab, hide the window, or stall on the settings page.
 
 ## Locations
 
+- Repository and update source: `https://github.com/bambom/codex-with-chatgpt.git`.
+  The checkout's `origin` must point to this fork so updates preserve the published
+  image, write and execution extensions. Keep the checkout path below local.
 - The codex-with-chatgpt checkout lives at: `<ACTUAL_CHECKOUT_PATH>`
   (installer/update MUST replace this line in the installed Skill with the user's actual checkout path.)
 - CLI: let `<checkout>` mean the path on the previous line; run
@@ -215,7 +218,7 @@ commands (both are cheap / cached; never mention them unless an update exists):
 
 Inside the checkout directory (see Locations):
 
-1. `git pull --ff-only` (if it fails due to local edits: `git stash && git pull --ff-only`).
+1. `git pull --ff-only`. Preserve local image-extension changes: if local edits block the pull, save them including untracked files, update, then restore and resolve them before building. Never leave the extension hidden in a stash or discard it.
 2. `corepack pnpm install && corepack pnpm build`.
 3. Re-install the Skill: copy `skill/SKILL.md` to
    `~/.codex/skills/codex-with-chatgpt/SKILL.md`, then fix the "checkout lives at:"
@@ -637,6 +640,27 @@ If status is restricted, ignore it and review from git_diff.
 10. On BLOCKED: read ChatGPT's reason, fix what you can, or surface the single
     decision the user must make.
     `c2c session set -w <ws> --protocol-state BLOCKED --waiting-for USER --known-issues "<short reason>"`
+
+## Local write and execution capabilities
+
+This installation also supports user-requested direct ChatGPT project edits and
+command execution. This is an explicit extension to the upstream read-only design.
+For setup, authorization scopes, tool syntax and execution limitations, read
+`docs/writing.md` in the checkout. Existing read-only tokens must not be silently
+upgraded. Preserve this extension alongside the image changes during updates.
+
+## Local image capabilities
+
+For viewing workspace images or saving ChatGPT-generated images, read
+`docs/images.md` in the checkout specified under Locations.
+Use `read_image` for PNG/JPEG/WebP/GIF, not `read_file`; it returns actual image
+content under the existing workspace read permission (20 MiB input limit).
+For saving, Codex exports the specific generated image from the in-app browser
+and runs the local `import-image` command. Default destination is
+`generated/chatgpt/`; never overwrite an existing file. This does not grant
+ChatGPT direct file-writing access or provide unattended background saving.
+Verify image viewing in ChatGPT and confirm the saved local file before claiming
+end-to-end success. Retain this local extension during upstream updates.
 
 ## Workflow: disconnect（"断开 ChatGPT"）
 
