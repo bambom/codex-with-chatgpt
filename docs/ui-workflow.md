@@ -8,6 +8,8 @@ Future architecture: [platform-owned design storage, result submission and on-de
 
 The platform proposal creates a separate Home entry, editor window and server business flow by copying the AI layer feature's relevant code. The original AI entry remains its own feature, and the separate `game-ui` FGUI editor project is outside this implementation scope.
 
+Implementation readiness update: follow the platform plan's P0-A contract gate, P0-B real canvas/history gate, and P1a/P2a minimal save-and-reopen path before expanding intake and editing. Engine-independent PNG reconstruction belongs in P0/P1; PSD/FGUI exports remain P4. The plugin-to-platform authorization contract must be settled in P1 and verified end to end in P3; an existing workspace connection is not a platform login. Merged documents need their own validation and previews, with submitted and committed hashes distinguished in the receipt. See the [updated implementation handoff](ui-design-platform-handoff.zh-CN.md). These requirements do not change the current tools documented below.
+
 ## Choose the output directory
 
 The built-in `workspace` destination needs no extra configuration and writes under:
