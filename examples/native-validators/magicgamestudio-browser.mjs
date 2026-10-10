@@ -193,8 +193,11 @@ export async function exerciseControls(page, controls, expectedTypes, saveCheck,
           await page.mouse.up(); await page.mouse.move(-10, -10); await page.evaluate(() => window.S.frames());
           row.after = await page.evaluate(path => ({ clicks: window.S.clicks, state: window.S.buttonState(window.S.locate(path)) }), target.path);
           const selection = row.before.state.mode === 1 ? row.after.state.selected !== row.before.state.selected : row.before.state.mode === 2 ? row.after.state.selected === true : true;
-          const press = !row.before.state.feedbackConfigured || JSON.stringify(row.pressed) !== JSON.stringify(row.hover);
+          // The pinned GButton changes to DOWN on mouse-down only in Common
+          // mode. Check/Radio change their selected state during the click.
+          const press = row.before.state.mode !== 0 || !row.before.state.feedbackConfigured || JSON.stringify(row.pressed) !== JSON.stringify(row.hover);
           const released = row.before.state.mode !== 0 || JSON.stringify(row.after.state) === JSON.stringify(row.before.state);
+          row.assertions = { oneClick: row.after.clicks === 1, selection, commonPressFeedback: press, release: released };
           row.status = row.after.clicks === 1 && selection && press && released ? 'passed' : 'failed';
           if (!row.before.state.feedbackConfigured) row.note = 'No visual feedback was authored; native click/selection behavior was tested without inventing a state.';
         }

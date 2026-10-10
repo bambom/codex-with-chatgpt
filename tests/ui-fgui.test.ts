@@ -51,8 +51,11 @@ function inventoryScene(): Scene {
       relations: [{ target: "bar", sidePair: "right-right" }] }] };
   const progress: SceneComponent = { id: "progress", name: "Experience", semantic: "ProgressBar", width: 200, height: 20,
     extension: { progressBar: { titleType: "valueAndmax" } }, children: [image("bar", "bar", 0, 6, 200, 8), text("title", "title", 200, 20, "0/100")] };
+  const scrollGrip: SceneComponent = { id: "scrollGrip", name: "ScrollGrip", semantic: "Button", width: 12, height: 30,
+    extension: { button: { mode: "Common" } }, children: [{ ...image("skin", "skin", 0, 0, 12, 30),
+      relations: [{ target: "", sidePair: "width-width,height-height" }] }] };
   const scrollbar: SceneComponent = { id: "scrollbar", name: "VerticalScrollBar", semantic: "ScrollBar", width: 12, height: 120,
-    extension: { scrollBar: { fixedGripSize: false } }, children: [image("bar", "bar", 0, 0, 12, 120), { ...image("grip", "grip", 0, 0, 12, 30), touchable: true }] };
+    extension: { scrollBar: { fixedGripSize: false } }, children: [image("bar", "bar", 0, 0, 12, 120), { ...instance("grip", "Button", "scrollGrip", 0, 0, 12, 30), touchable: true }] };
   const row: SceneComponent = { id: "row", name: "InventoryRow", semantic: "Component", width: 200, height: 24,
     children: [text("label", "label", 160, 24), { id: "icon", name: "icon", type: "Loader", x: 176, y: 4, width: 16, height: 16, assetId: "skin" }] };
   const main: SceneComponent = { id: "main", name: "Inventory", semantic: "Component", width: 360, height: 480,
@@ -70,7 +73,7 @@ function inventoryScene(): Scene {
     ] };
   return { schemaVersion: 1, id: "inventory", name: "Inventory", canvas: { width: 360, height: 480 }, entry: "main",
     assets: [{ id: "skin", file: "skin.png", width: 16, height: 16, scale9grid: [2, 2, 12, 12], provenance: "Test skin" }], fonts: [],
-    components: [main, action, option, popup, combo, grip, slider, progress, scrollbar, row] };
+    components: [main, action, option, popup, combo, grip, slider, progress, scrollbar, row, scrollGrip] };
 }
 
 async function skin(dir: string): Promise<void> {
@@ -158,6 +161,36 @@ describe("shared semantic scene and native source export", () => {
     expect([label.x, label.y, label.opacity]).toEqual([16, 224, 0.5]);
     expect(resolved.layers.some(layer => layer.type === "Group")).toBe(false);
     expect(resolved.layers.find(layer => layer.sourceId === "pageMark")!.visible).toBe(true);
+  });
+
+  it("uses a hittable native Button grip and resizes only its explicitly related skin", async () => {
+    const scene = inventoryScene(), resolved = resolveScene(scene), root = temp(); await skin(root);
+    const grip = resolved.nodes.find(node => node.id === "main/inventory/@verticalScrollBar/grip")!;
+    const skinLayer = resolved.layers.find(node => node.id === grip.id + "/skin")!;
+    expect(grip).toMatchObject({ type: "Button", targetFguiType: "GButton", x: 216, y: 224, width: 12, height: 75 });
+    expect(skinLayer).toMatchObject({ x: 216, y: 224, width: 12, height: 75 }); // floor(120 / (8 * 24) * 120)
+    const output = path.join(root, "source"), report = await exportFgui(scene, profile(), root, output, "grip-fix");
+    const template = report.resources.find(resource => resource.semanticId === "scrollGrip" && resource.kind === "component")!;
+    const xml = await fs.readFile(path.join(output, template.file), "utf8");
+    expect(xml).toContain('opaque="true"'); expect(xml).toContain('extention="Button"');
+    expect(xml).toContain('target="" sidePair="width-width,height-height"');
+    expect(xml).toContain('size="12,30"'); // Template stays at authored size; runtime parent relation stretches its skin.
+    const bar = scene.components.find(component => component.id === "scrollbar")!;
+    bar.children[1] = { ...image("grip", "grip", 0, 0, 12, 30), touchable: true };
+    expect(validateScene(scene).errors.some(error => error.code === "SCROLLBAR_GRIP")).toBe(true);
+    const slider = scene.components.find(component => component.id === "slider")!;
+    slider.children[1] = { ...image("grip", "grip", 186, 0, 12, 20), touchable: true, relations: [{ target: "bar", sidePair: "right-right" }] };
+    expect(validateScene(scene).errors.some(error => error.code === "SLIDER_GRIP")).toBe(true);
+    const missingRelation = inventoryScene(); delete missingRelation.components.find(component => component.id === "scrollGrip")!.children[0].relations;
+    expect(validateScene(missingRelation).errors.some(error => error.code === "SCROLLBAR_GRIP_RESIZE")).toBe(true);
+    // Re-reading already-exported files must reject an image being substituted
+    // for an interactive grip, independently of the Scene validator.
+    const scrollbarFile = path.join(output, report.resources.find(resource => resource.semanticId === "scrollbar" && resource.kind === "component")!.file);
+    const imageResource = report.resources.find(resource => resource.kind === "image")!;
+    const original = await fs.readFile(scrollbarFile, "utf8");
+    await fs.writeFile(scrollbarFile, original.replace(/<component\b[^>]*name="grip"[^>]*>.*?<\/component>/,
+      `<image id="brokenGrip" name="grip" src="${imageResource.id}" fileName="${imageResource.path.slice(1)}${imageResource.name}" xy="0,0" size="12,30" touchable="true"/>`));
+    expect((await validateFguiSource(output, profile())).errors.some(error => error.code === "NATIVE_GRIP_HIT_TARGET")).toBe(true);
   });
 
   it("uses only explicit native PNG variants at their own dimensions and excludes PSD-only references", async () => {

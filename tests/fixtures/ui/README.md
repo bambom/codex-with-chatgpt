@@ -17,6 +17,10 @@ with eight distinct reusable items and an associated ScrollBar, a ComboBox with
 two selectable options and a real popup List, and an initial controller page.
 Slider `bar` is authored at its full 184 px length; the initial shared layout
 resolves it to 46 px through the instance value and its grip relation.
+ScrollBar `grip` is an opaque Common Button, with an Image skin related to its
+parent's width and height. The 12 × 30 template resolves to a 12 × 75 initial
+grip for the 120 px viewport / 192 px content. An Image alone cannot receive
+pointer hits in the target SDK, even when its `touchable` property is true.
 
 The source-export regression test enforces the real current importer ceiling of
 64 files and 2,000,000 bytes. It also checks hidden state glyph coverage. Every

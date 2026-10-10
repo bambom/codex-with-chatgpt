@@ -38,6 +38,37 @@ with `ui_workflow_info`. Its `guidance` action returns the bundled `ui-productio
 
 The skill lives at `skill/ui-production/SKILL.md` in this Git repository. It supplements the existing `skill/SKILL.md` connection workflow; the existing setup and pairing skill is not replaced.
 
+## Activate an already installed upgrade
+
+Building an updated checkout does not replace code already loaded by a running bridge. This implementation has no hot-reload command. `start`, `setup`, and `doctor` reuse a healthy bridge for the workspace without comparing its version with the installed CLI, so they do not automatically activate new tools in that process. Newly launched local `c2c ui ...` commands can use the updated files immediately; the ChatGPT connection exposes the new tools only after the bridge and connection have been updated.
+
+The following steps activate code that has already been reviewed, installed, and built locally. Publishing its Git branch is a separate operation and requires an explicit publishing instruction; continuing local work does not imply permission to push or publish it.
+
+1. Finish active builds and native validators. Open an **independent terminal on the bridge computer**, or use a local Codex session that will remain available after the bridge stops. Do not restart through the sole MCP `run_command` connection to that same bridge: shutdown also stops its tunnel, so the connection can disappear before it returns the replacement address.
+2. From that independent Windows terminal, use the actual checkout and workspace paths:
+
+   ```powershell
+   $pluginCheckout = 'C:\Path\To\codex-with-chatgpt'
+   $workspaceRoot = 'E:\Path\To\GameWorkspace'
+   node "$pluginCheckout\bin\c2c.js" --version
+   node "$pluginCheckout\bin\c2c.js" restart --tunnel -w "$workspaceRoot"
+   node "$pluginCheckout\bin\c2c.js" status -w "$workspaceRoot" --json
+   node "$pluginCheckout\bin\c2c.js" doctor -w "$workspaceRoot" --no-fix --json
+   ```
+
+   `restart` has no `--json` option. Check that the running version reported by `status` matches the installed CLI version and that the workspace is correct. With a Quick Tunnel, restarting stops the old public address and starts a new one. Use the actual new `chatgptRepair.mcpUrl` from doctor, or the reported `publicUrl` followed by `/mcp`; never reuse a guessed address. Keep the first doctor result: endpoint detection also records the new address locally, so a later `chatgptRepair.needed: false` does not prove that ChatGPT has been reconfigured.
+3. Follow **Workflow: reconnect after address reclaim** in the existing [connection skill](../skill/SKILL.md). For a changed URL, remove only this workspace's old connector and create it again with the **same recorded connector name**, the new server URL, and OAuth authentication. Leave other workspaces' connectors and the Project's connector-name instructions intact. The existing workflow uses removal and recreation for a changed URL; it does not rely on a Refresh or Reconnect button on the old address.
+4. Complete the normal OAuth authorization. Request the scopes needed for UI production as described in [writing.md](writing.md). When the authorization form is ready for a pairing code, run this in the independent terminal:
+
+   ```powershell
+   node "$pluginCheckout\bin\c2c.js" pair -w "$workspaceRoot" --json
+   ```
+
+   Use that fresh one-time code on the authorization form. Use the same Windows account, workspace path, and existing `C2C_STATE_DIR` override if one is configured. Do not delete state or run `unpair` as an upgrade step. Persisted configuration and jobs are separate from the restarted process; this does not guarantee reuse of a previous OAuth grant after the server URL changes.
+5. Verify the connection from ChatGPT itself: call `workspace_info`, confirm the intended workspace, then call `ui_workflow_info` with `action: "capabilities"` and `action: "guidance"`. Confirm that the connection now exposes the 14 `ui_*` tools, including `ui_validate_native`. A green doctor report or the new version on disk alone is insufficient. If the old conversation remains bound to the removed connector, use the existing skill's same-Project/new-chat handoff procedure and verify the workspace again before continuing.
+
+`ui_workflow_info` remains a read-only discovery operation.
+
 ## Production sequence
 
 1. Inspect the supplied image. Preserve an explicitly final design and record the original canvas dimensions and exact visible text.

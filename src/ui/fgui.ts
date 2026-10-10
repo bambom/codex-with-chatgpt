@@ -569,6 +569,24 @@ export async function validateFguiSource(outDir: string, profile: TargetProfile)
       if (extension === "Slider" && !component.nodes.some(node => node.value["@_name"] === "grip")) error("NATIVE_GRIP_PART", at, "Slider requires grip.");
     }
     if (extension === "ScrollBar" && !["bar", "grip"].every(name => component.nodes.some(node => node.value["@_name"] === name))) error("NATIVE_SCROLLBAR_PARTS", at, "Scrollbar requires bar and grip.");
+    if (extension === "Slider" || extension === "ScrollBar") {
+      const grip = component.nodes.find(node => node.value["@_name"] === "grip");
+      const ref = grip ? resources.get(`${grip.value["@_pkg"] ?? component.resource.packageId}:${grip.value["@_src"]}`) : undefined;
+      const template = ref ? components.get(keyOf(ref)) : undefined;
+      if (grip?.tag !== "component" || grip.value["@_touchable"] === "false" || template?.root["@_extention"] !== "Button" || template.root["@_opaque"] !== "true")
+        error("NATIVE_GRIP_HIT_TARGET", at, "Use an opaque native Button component for grip. Image and ordinary Text never receive pointer hits in the target SDK, regardless of touchable=true.");
+      if (extension === "ScrollBar" && template) {
+        if ((template.root.Button?.["@_mode"] ?? "Common") !== "Common") error("NATIVE_SCROLLBAR_GRIP_MODE", at, "ScrollBar grip must use a Common Button.");
+        if (component.root.ScrollBar?.["@_fixedGripSize"] !== "true") {
+          const fullSkin = template.nodes.some(node => {
+            const pairs = asArray<Xml>(node.value.relation).filter(relation => relation["@_target"] === "").flatMap(relation => String(relation["@_sidePair"] ?? "").split(","));
+            return node.tag === "image" && node.value["@_xy"] === "0,0" && node.value["@_size"] === template.root["@_size"] &&
+              (pairs.includes("width") || pairs.includes("width-width")) && (pairs.includes("height") || pairs.includes("height-height"));
+          });
+          if (!fullSkin || template.nodes.some(node => node.tag !== "image")) error("NATIVE_SCROLLBAR_GRIP_RESIZE", at, "Proportional grip requires a flat Button with a full-size Image skin and parent width/height relations.");
+        }
+      }
+    }
     const scrollRefs = String(component.root["@_scrollBarRes"] ?? "").split(",").filter(Boolean);
     for (const ref of scrollRefs) addDependency(component, resolveUrl(ref, at, "component"));
     for (const definition of asArray<Xml>(component.root.customProperty)) {

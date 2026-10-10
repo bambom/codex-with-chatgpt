@@ -419,7 +419,8 @@ export function validateScene(value: unknown): SceneValidation {
         fail("BAR_PART", at, "v1 requires one full-range Image named bar (horizontal) or bar_v (vertical); nested resizable bar components require a native layout adapter.");
       if (component.semantic === "Slider") {
         const grip = component.children.find(node => node.name === "grip"); const bar = bars[0];
-        if (!grip || grip.touchable === false || (!COMPONENT_TYPES.has(grip.type) && grip.type !== "Image")) fail("SLIDER_GRIP", at, "Slider requires a touchable grip part.");
+        if (!grip || grip.touchable === false || grip.type !== "Button" || components.get(grip.componentId ?? "")?.semantic !== "Button")
+          fail("SLIDER_GRIP", at, "Slider grip must be a touchable native Button component. The target SDK never enables pointer hits on Image or ordinary Text, even with touchable=true.");
         if (grip && bar) {
           const reverse = component.extension?.slider?.reverse;
           const expected = bar.name === "bar" ? reverse ? "left-left" : "right-right" : reverse ? "top-top" : "bottom-bottom";
@@ -428,8 +429,26 @@ export function validateScene(value: unknown): SceneValidation {
         }
       }
     }
-    if (component.semantic === "ScrollBar" && !["bar", "grip"].every(part => component.children.some(node => node.name === part && node.type === "Image")))
-      fail("SCROLLBAR_PARTS", at, "v1 ScrollBar requires Image parts named bar and grip, so native size changes have exact raster counterparts.");
+    if (component.semantic === "ScrollBar") {
+      if (!component.children.some(node => node.name === "bar" && node.type === "Image"))
+        fail("SCROLLBAR_PARTS", at, "ScrollBar requires an Image track named bar and a native Button named grip.");
+      const grip = component.children.find(node => node.name === "grip"), template = components.get(grip?.componentId ?? "");
+      if (!grip || grip.type !== "Button" || grip.touchable === false || template?.semantic !== "Button" || template.extension?.button?.mode !== "Common")
+        fail("SCROLLBAR_GRIP", at, "ScrollBar grip must be a touchable Common Button component. Image/ordinary Text cannot receive pointer hits in the target SDK; setting touchable=true does not fix that.");
+      else if (!component.extension?.scrollBar?.fixedGripSize) {
+        // A narrow, explicit resizable-skin adapter. Other component instances
+        // keep the existing same-size restriction; no arbitrary nested layout
+        // is inferred when a scroll pane changes its grip height/width.
+        const hasFullSkin = template.children.some(child => {
+          const parentPairs = child.relations?.filter(relation => relation.target === "").flatMap(relation => relation.sidePair.split(",")) ?? [];
+          return child.type === "Image" && child.x === 0 && child.y === 0 && child.width === template.width && child.height === template.height &&
+            (parentPairs.includes("width") || parentPairs.includes("width-width")) && (parentPairs.includes("height") || parentPairs.includes("height-height"));
+        });
+        if (!hasFullSkin || template.children.some(child => child.type !== "Image") ||
+          (template.overflow && template.overflow !== "visible") || Object.values(template.margin ?? {}).some(value => value !== 0))
+          fail("SCROLLBAR_GRIP_RESIZE", at, "A proportional ScrollBar grip supports a flat Common Button made of Image skins. Include a full-size skin with parent (target='') width-width,height-height relations; nested/other resizable controls are not supported.");
+      }
+    }
     if (component.semantic === "ComboBox") {
       const dropdown = component.extension?.comboBox?.dropdown; if (dropdown) links.get(component.id)!.add(dropdown);
       const popup = dropdown ? components.get(dropdown) : undefined;
@@ -595,7 +614,7 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
     }
     return { selected, checked };
   };
-  const applyRelations = (original: SceneNode[], values: SceneNode[]) => {
+  const applyRelations = (original: SceneNode[], values: SceneNode[], gripParentDelta?: { width: number; height: number }) => {
     const oldMap = new Map(original.map(node => [node.id, node]));
     const map = new Map(values.map(node => [node.id, node])); const seen = new Set<string>(), active = new Set<string>();
     const apply = (node: SceneNode) => {
@@ -603,11 +622,16 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
       if (active.has(node.id)) throw new SceneError([{ code: "RELATION_CYCLE", path: node.id, message: "Cyclic layout relations cannot be resolved deterministically." }]);
       active.add(node.id);
       for (const relation of node.relations ?? []) {
-        if (!relation.target) continue; // same-size component instances leave parent relations unchanged.
-        const target = map.get(relation.target)!, baseline = oldMap.get(relation.target)!;
-        apply(target);
-        const dx = target.x - baseline.x, dy = target.y - baseline.y;
-        const dw = target.width - baseline.width, dh = target.height - baseline.height;
+        let dx = 0, dy = 0, dw = 0, dh = 0;
+        if (!relation.target) {
+          if (!gripParentDelta) continue; // Other component instances retain their same-size restriction.
+          dw = gripParentDelta.width; dh = gripParentDelta.height;
+        } else {
+          const target = map.get(relation.target)!, baseline = oldMap.get(relation.target)!;
+          apply(target);
+          dx = target.x - baseline.x; dy = target.y - baseline.y;
+          dw = target.width - baseline.width; dh = target.height - baseline.height;
+        }
         for (const pair of relation.sidePair.split(",")) {
           if (pair === "width" || pair === "width-width") { node.width += dw; continue; }
           if (pair === "height" || pair === "height-height") { node.height += dh; continue; }
@@ -639,7 +663,8 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
     walk(component, { ...ctx, x: rect.x, y: rect.y }, {}, { direction: rect.height > rect.width ? "vertical" : "horizontal", ratio, width: rect.width, height: rect.height });
   };
   const walk = (component: SceneComponent, ctx: Context, instance: ComponentInstance,
-    scrollState?: { direction: "vertical" | "horizontal"; ratio: number; width: number; height: number }) => {
+    scrollState?: { direction: "vertical" | "horizontal"; ratio: number; width: number; height: number },
+    scrollGripSize?: { width: number; height: number }) => {
     const { selected, checked } = selection(component, instance, ctx.parentControllers);
     const children = orderedNodes(component).map(cloneNode);
     for (const node of children) {
@@ -683,7 +708,7 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
       const title = children.find(node => node.name === "title" && TEXT_TYPES.has(node.type));
       if (title) mutateText(title, nativeTitle(definition, instance));
     }
-    applyRelations(orderedNodes(component), children);
+    applyRelations(orderedNodes(component), children, scrollGripSize ? { width: scrollGripSize.width - component.width, height: scrollGripSize.height - component.height } : undefined);
     if (scrollState) {
       const bar = children.find(node => node.name === "bar")!, grip = children.find(node => node.name === "grip")!;
       if (scrollState.direction === "vertical") {
@@ -698,7 +723,7 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
       grip.visible = grip.visible !== false && scrollState.ratio > 0 && scrollState.ratio < 1;
     }
     const margin = component.margin ?? { top: 0, bottom: 0, left: 0, right: 0 };
-    const ownerWidth = scrollState?.width ?? component.width, ownerHeight = scrollState?.height ?? component.height;
+    const ownerWidth = scrollGripSize?.width ?? scrollState?.width ?? component.width, ownerHeight = scrollGripSize?.height ?? scrollState?.height ?? component.height;
     const showBars = component.overflow === "scroll" && component.scrollBar === "visible";
     const vertical = showBars && component.verticalScrollBar ? components.get(component.verticalScrollBar) : undefined;
     const horizontal = showBars && component.horizontalScrollBar ? components.get(component.horizontalScrollBar) : undefined;
@@ -727,7 +752,8 @@ export function resolveScene(input: Scene, options: SceneResolveOptions = {}): R
       result.nodes.push(effective);
       const childContext: Context = { x: effective.x, y: effective.y, opacity: effective.opacity, visible: effective.visible,
         path: globalId, parentId: ctx.path, groupPath: [...ctx.groupPath, `${node.name} [${node.id}]`], clip, parentControllers: selected };
-      if (node.componentId) walk(components.get(node.componentId)!, childContext, node.instance ?? {});
+      if (node.componentId) walk(components.get(node.componentId)!, childContext, node.instance ?? {}, undefined,
+        scrollState && node.name === "grip" ? { width: node.width, height: node.height } : undefined);
       else if (node.type === "List" && node.list) {
         const list = node.list, lm = list.margin ?? { top: 0, bottom: 0, left: 0, right: 0 };
         const listVertical = list.scrollBar === "visible" && list.verticalScrollBar ? components.get(list.verticalScrollBar) : undefined;

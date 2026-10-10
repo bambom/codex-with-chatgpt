@@ -640,15 +640,16 @@
         {
           "id": "grip",
           "name": "grip",
-          "type": "Image",
+          "type": "Button",
+          "componentId": "scrollGrip",
           "x": 0,
           "y": 0,
           "width": 12,
           "height": 30,
-          "assetId": "skin",
           "touchable": true,
+          "instance": {},
           "recognition": {
-            "basis": "Authored semantic verification fixture with explicit native control roles."
+            "basis": "A native Button owns pointer hits; the locked SDK explicitly disables Image hits even when touchable=true."
           }
         }
       ]
@@ -759,6 +760,39 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "scrollGrip",
+      "name": "ScrollGrip",
+      "semantic": "Button",
+      "width": 12,
+      "height": 30,
+      "extension": {
+        "button": {
+          "mode": "Common"
+        }
+      },
+      "children": [
+        {
+          "id": "skin",
+          "name": "skin",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 12,
+          "height": 30,
+          "assetId": "skin",
+          "relations": [
+            {
+              "target": "",
+              "sidePair": "width-width,height-height"
+            }
+          ],
+          "recognition": {
+            "basis": "Explicit parent width/height relations keep the visual skin equal to the runtime-proportional grip bounds."
+          }
         }
       ]
     }
