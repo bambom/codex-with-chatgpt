@@ -4,6 +4,8 @@ The connected **Codex with ChatGPT** plugin can assemble a game UI into real lay
 
 ChatGPT supplies the design decisions, image generation, material separation, transcription, and semantic scene. The plugin performs bounded file transfer, source-format inspection, deterministic export, validation, and local delivery. It does not call an image-generation API or automatically recover a complete editable UI from a screenshot.
 
+Future architecture research: [a canonical UI authoring format with target adapters](ui-canonical-format-proposal.zh-CN.md) and [FGUI round-trip synchronization](ui-roundtrip-sync-proposal.zh-CN.md). These are design proposals; the current workflow does not yet import edits from PSD/FGUI or provide Unity/Cocos adapters.
+
 ## Choose the output directory
 
 The built-in `workspace` destination needs no extra configuration and writes under:
