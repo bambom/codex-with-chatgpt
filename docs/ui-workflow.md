@@ -4,7 +4,9 @@ The connected **Codex with ChatGPT** plugin can assemble a game UI into real lay
 
 ChatGPT supplies the design decisions, image generation, material separation, transcription, and semantic scene. The plugin performs bounded file transfer, source-format inspection, deterministic export, validation, and local delivery. It does not call an image-generation API or automatically recover a complete editable UI from a screenshot.
 
-Future architecture research: [a canonical UI authoring format with target adapters](ui-canonical-format-proposal.zh-CN.md) and [FGUI round-trip synchronization](ui-roundtrip-sync-proposal.zh-CN.md). These are design proposals; the current workflow does not yet import edits from PSD/FGUI or provide Unity/Cocos adapters.
+Future architecture: [platform-owned design storage, result submission and on-demand exports](ui-design-platform-integration.zh-CN.md), [a canonical UI authoring format with target adapters](ui-canonical-format-proposal.zh-CN.md), and [FGUI round-trip synchronization](ui-roundtrip-sync-proposal.zh-CN.md). The new direction keeps image production, asset separation, semantics, layout and full-canvas PNG reconstruction in ChatGPT; the plugin retrieves the platform specification and submits the completed result. MagicGameClient and its server own accepted designs and all PSD/FGUI/Unity/Cocos generation. These are proposals, not implemented behavior. The remainder of this guide describes the current v0.2.0 local export workflow, which does not yet provide platform submission or target round-trip import.
+
+The platform proposal creates a separate Home entry, editor window and server business flow by copying the AI layer feature's relevant code. The original AI entry remains its own feature, and the separate `game-ui` FGUI editor project is outside this implementation scope.
 
 ## Choose the output directory
 
