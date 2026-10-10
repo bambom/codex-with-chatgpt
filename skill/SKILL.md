@@ -184,6 +184,8 @@ that close the tab, hide the window, or stall on the settings page.
   image, write and execution extensions. Keep the checkout path below local.
 - The codex-with-chatgpt checkout lives at: `<ACTUAL_CHECKOUT_PATH>`
   (installer/update MUST replace this line in the installed Skill with the user's actual checkout path.)
+- Codex home: let `<codex-home>` be a non-empty `CODEX_HOME` when set; otherwise
+  use `~/.codex` (`%USERPROFILE%\.codex` on Windows).
 - CLI: let `<checkout>` mean the path on the previous line; run
   `node "<checkout>/bin/c2c.js" <command>` (or `c2c <command>` if globally linked).
   All commands support `--json` for parsing.
@@ -206,7 +208,7 @@ commands (both are cheap / cached; never mention them unless an update exists):
 2. `c2c sandbox-allow --json` (do not pass `-w`) — writes the C2C state directory into Codex's
    sandbox `writable_roots` (macOS: `~/Library/Application Support/codex-with-chatgpt`;
    Windows: `%LOCALAPPDATA%\codex-with-chatgpt`; config file is
-   `~/.codex/config.toml` on both, or `%USERPROFILE%\.codex\config.toml` on Windows).
+   `<codex-home>/config.toml`; see **Locations**).
    If already allowlisted, this is a no-op and does not trigger elevation.
 
 - `{ "updateAvailable": false }` → continue silently. Never mention the check.
@@ -221,7 +223,7 @@ Inside the checkout directory (see Locations):
 1. `git pull --ff-only`. Preserve local image-extension changes: if local edits block the pull, save them including untracked files, update, then restore and resolve them before building. Never leave the extension hidden in a stash or discard it.
 2. `corepack pnpm install && corepack pnpm build`.
 3. Re-install the Skill: copy `skill/SKILL.md` to
-   `~/.codex/skills/codex-with-chatgpt/SKILL.md`, then fix the "checkout lives at:"
+   `<codex-home>/skills/codex-with-chatgpt/SKILL.md`, then fix the "checkout lives at:"
    line in the copy to the actual checkout path.
 4. `c2c sandbox-allow --json` (so existing installs pick up the sandbox allowlist),
    then `c2c restart -w <workspace>` so the bridge runs the new code, then
@@ -653,14 +655,35 @@ upgraded. Preserve this extension alongside the image changes during updates.
 
 For viewing workspace images or saving ChatGPT-generated images, read
 `docs/images.md` in the checkout specified under Locations.
-Use `read_image` for PNG/JPEG/WebP/GIF, not `read_file`; it returns actual image
-content under the existing workspace read permission (20 MiB input limit).
+Use `read_image` for PNG/JPEG/WebP/GIF/SVG, not `read_file`; it returns actual image
+content under the existing workspace read permission. Raster previews retain the
+20 MiB input limit and resizing; validated SVGs use the upstream 10 MiB limit.
 For saving, Codex exports the specific generated image from the in-app browser
 and runs the local `import-image` command. Default destination is
 `generated/chatgpt/`; never overwrite an existing file. This does not grant
 ChatGPT direct file-writing access or provide unattended background saving.
 Verify image viewing in ChatGPT and confirm the saved local file before claiming
 end-to-end success. Retain this local extension during upstream updates.
+
+## Workflow: ChatGPT-generated media
+
+`read_image` remains read-only and supports PNG/JPEG/GIF/WebP/SVG. This fork's
+separately authorized text-write and command tools remain available, but media
+downloads are imported by the local execution harness using the workflow below.
+
+When the user asks ChatGPT web to generate an image or video:
+
+1. Generate it in the workspace's saved ChatGPT conversation using the same
+   built-in browser tab and connector rules above.
+2. Activate the finished asset's actual Download control through the visible
+   ChatGPT UI. Browser screenshots are navigation evidence only; never save,
+   crop, rename, or import a screenshot as the requested asset.
+3. Import the original download through the local execution harness:
+   `c2c asset import -w <ws> --from <downloaded-file> --to <new-workspace-relative-path> --json`.
+4. The destination must be new and project-relative. The importer validates
+   PNG/JPEG/GIF/WebP/SVG/MP4/MOV/WebM content, rejects active SVG and path
+   escapes, and never overwrites an existing file. Include the imported path in
+   EXECUTED/review.
 
 ## Workflow: disconnect（"断开 ChatGPT"）
 

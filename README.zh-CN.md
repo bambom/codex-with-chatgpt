@@ -39,9 +39,10 @@ Agent（Codex），然后去倒杯咖啡：
 2. 下载：把 https://github.com/bambom/codex-with-chatgpt.git 克隆到
    ~/codex-with-chatgpt（已存在就 git pull 更新）。
 3. 构建：在该目录里执行 corepack pnpm install 和 corepack pnpm build。
-4. 安装 Skill：把仓库里的 skill/SKILL.md 复制到
-   ~/.codex/skills/codex-with-chatgpt/SKILL.md，并把文件中
-   "The codex-with-chatgpt checkout lives at:" 那一行的路径改成实际克隆路径。
+4. 安装 Skill：先确定 Codex home：如果设置了非空的 CODEX_HOME 就使用它，
+   否则使用 ~/.codex（Windows 默认为 %USERPROFILE%\.codex）。把仓库里的
+   skill/SKILL.md 复制到 <codex-home>/skills/codex-with-chatgpt/SKILL.md，
+   并把文件中 "The codex-with-chatgpt checkout lives at:" 那一行的路径改成实际克隆路径。
 5. 首次配置：按 SKILL.md 里的 first-time setup 流程执行
   （运行 c2c setup，用内置浏览器打开 ChatGPT 配置连接器并输入配对码）。
    全程只用内置浏览器，禁止打开任何第三方浏览器。
@@ -56,9 +57,17 @@ Agent（Codex），然后去倒杯咖啡：
 
 ## 安装 → 配置 → 使用（手动版）
 
-1. 安装 Codex Skill：把 `skill/` 复制到 `~/.codex/skills/codex-with-chatgpt/`。
+设 `<codex-home>` 为：如果 `CODEX_HOME` 已设置且非空，则使用 `CODEX_HOME`；
+否则使用 `~/.codex`（Windows 上默认为 `%USERPROFILE%\.codex`）。
+
+1. 安装 Codex Skill：把 `skill/` 复制到 `<codex-home>/skills/codex-with-chatgpt/`。
 2. 对 Codex 说：**"使用 Codex with ChatGPT 完成首次配置。"**
 3. 之后正常使用：**"使用 Codex with ChatGPT，帮我实现 XXX。"**
+
+> **安装范围：** 本项目不会发布或安装 Codex 网页版 GPT、启动器或模型目录条目。
+> 安装内容是构建本仓库、把 `skill/SKILL.md` 安装为 Codex Skill，然后运行
+> `c2c setup` 配置 ChatGPT 连接器。网页版 GPT 或模型目录的问题请先查看
+> [故障排查](docs/troubleshooting.md)。
 
 说明书到此结束。你不需要知道 MCP、OAuth、Tunnel、端口、localhost 是什么——
 Codex 会自动完成所有配置，你只会看到：
@@ -113,17 +122,26 @@ Ready.
 - **控制面（Computer Use）**：Codex 与 ChatGPT 之间只交换极小的结构化 `[C2C]`
   状态消息——`INIT → PLAN → EXECUTED → REVIEW → DONE`。绝不粘贴 diff、日志
   或文件内容。
-- **数据面（MCP）**：ChatGPT 缺什么自己拉什么，共 9 个只读工具：
+- **数据面（MCP）**：ChatGPT 缺什么自己拉什么，共 10 个只读工具：
   `workspace_info`、`list_directory`、`read_file`、`search_workspace`、
   `git_status`、`git_diff`、`test_status`、`execution_summary`、
-  `execution_output`。
+  `execution_output`、`read_image`。
 - **独立审查**：Codex 执行完毕后，ChatGPT 通过 MCP 亲自检查真实的 git diff
   和测试记录——绝不因为 Codex 说"测试全过"就直接相信。
 
+### 生成媒体交接
+
+`read_image` 本身只读；此 fork 仍保留单独授权的文本写入和命令工具，详见
+[docs/writing.md](docs/writing.md)。
+通过可见的 ChatGPT 页面下载图片或视频原件后，本地执行端可以运行
+`c2c asset import -w <workspace> --from <download> --to <new-path>` 安全导入。
+导入过程限制在工作区内，会验证签名和大小、拒绝活动 SVG，并且绝不覆盖现有文件。
+
 ## 安全模型（简版）
 
-- **从构造上只读**：服务端根本不存在写文件/删除/Shell/提交类工具，任何提示
-  注入都无法启用它们。
+- **显式授权写入与执行**：只读令牌不能调用 `write_file`、`apply_patch` 或
+  `run_command`；这些工具要求单独授予写入或执行权限。命令以电脑用户身份运行，
+  没有系统沙箱隔离。
 - **一个工作区 = 一道边界**：每个令牌绑定单一工作区；路径校验基于规范化
   realpath（symlink、`../`、绝对路径逃逸全部被拦截并有测试覆盖）。
 - **敏感文件永不外泄**：`.env*`、密钥、SSH、各类凭据默认拒绝
@@ -159,7 +177,7 @@ c2c status / doctor / pair / unpair / logs / stop
 ```
 src/
   bridge/     本机回环 HTTP 服务、端口自动恢复、管理 API
-  mcp/        9 个只读工具、无状态 Streamable HTTP
+  mcp/        10 个读取工具 + 3 个单独授权的修改工具、无状态 Streamable HTTP
   auth/       OAuth 2.1（PKCE、动态注册、refresh 轮换、吊销）
   pairing/    一次性配对码（CSPRNG、TTL、限速）
   workspace/  路径收敛、敏感文件策略、搜索、git

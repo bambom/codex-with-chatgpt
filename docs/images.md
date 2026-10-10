@@ -7,7 +7,8 @@ It returns an actual MCP image block and a short metadata block, not base64 text
 PNG, JPEG, WebP and GIF are supported. Inputs are limited to 20 MiB and 64 megapixels.
 Previews preserve aspect ratio and transparency, correct orientation and strip
 metadata. Images larger than 2048 pixels are resized; animated images use frame 1.
-Output is PNG, or WebP when PNG would exceed 4 MiB. SVG/PDF/PSD are not supported.
+Raster output is PNG, or WebP when PNG would exceed 4 MiB. Safe SVG files up to
+10 MiB are validated and returned unchanged; PDF/PSD are not supported.
 Workspace containment, sensitive-file exclusions and `.c2cignore` still apply.
 
 ## Save images generated in ChatGPT
@@ -29,6 +30,9 @@ Use the extension matching the downloaded image. The command validates the image
 copies the original downloaded bytes, and refuses overwrites or destinations
 outside the workspace. This is a local command, not a ChatGPT write tool.
 ChatGPT can then inspect the saved file with `read_image`.
+
+The upstream `asset import --from <download> --to <new-path>` command also
+imports supported images and MP4/MOV/WebM originals without overwriting files.
 
 After building this extension, restart the bridge, repair the ChatGPT connection
 if its address changes, and refresh the tools. Verify in ChatGPT that `read_image`

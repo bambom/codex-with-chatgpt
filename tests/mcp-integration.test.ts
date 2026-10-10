@@ -48,6 +48,8 @@ beforeAll(async () => {
   makeGitRepo(root);
   write(root, "package.json", JSON.stringify({ name: "demo", scripts: { test: "vitest run" }, dependencies: { react: "^19.0.0" } }));
   write(root, ".env", "API_KEY=supersecret\n");
+  await sharp({ create: { width: 1, height: 1, channels: 4, background: "blue" } })
+    .png().toFile(path.join(root, "pixel.png"));
   // an uncommitted change so git_diff has content
   write(root, "src/index.ts", "export const answer = 43; // changed\n");
 
@@ -102,6 +104,7 @@ describe("MCP tools over Streamable HTTP", () => {
     expectToolOutputSchema(tools, "workspace_info", ["workspaceId", "workspaceName", "projectType", "git"]);
     expectToolOutputSchema(tools, "list_directory", ["path", "entries", "total", "hasMore"]);
     expectToolOutputSchema(tools, "read_file", ["path", "content", "startLine", "endLine", "nextStartLine"]);
+    expectToolOutputSchema(tools, "read_image", ["path", "sizeBytes", "mimeType"]);
     expectToolOutputSchema(tools, "search_workspace", ["matches", "matchCount", "truncated", "engine"]);
     expectToolOutputSchema(tools, "git_status", ["isRepo", "branch", "staged", "unstaged", "untracked", "hidden"]);
     expectToolOutputSchema(tools, "git_diff", ["isRepo", "mode", "diff", "hasMore", "nextOffset"]);
@@ -160,6 +163,32 @@ describe("MCP tools over Streamable HTTP", () => {
       expect(result.isError).not.toBe(true);
       expect(jsonOf(result).output).toContain("c2c-execution-ok");
     } finally { await writer.close(); }
+  });
+
+  it("read_image returns structured metadata and real image content", async () => {
+    const result = await client.callTool({ name: "read_image", arguments: { path: "pixel.png" } });
+    expect(result.isError).not.toBe(true);
+    expect(structuredJsonOf(result)).toMatchObject({
+      path: "pixel.png", sizeBytes: fs.statSync(path.join(root, "pixel.png")).size, mimeType: "image/png",
+      width: 1, height: 1,
+    });
+    const content = result.content as { type: string; data?: string }[];
+    const image = content.find(item => item.type === "image")!;
+    expect((await sharp(Buffer.from(image.data!, "base64")).metadata()).format).toBe("png");
+  });
+
+  it("read_image supports safe SVG while rejecting active SVG", async () => {
+    const safe = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="blue"/></svg>';
+    write(root, "safe.svg", safe);
+    write(root, "unsafe.svg", '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    const result = await client.callTool({ name: "read_image", arguments: { path: "safe.svg" } });
+    expect(result.isError).not.toBe(true);
+    expect(structuredJsonOf(result)).toEqual({ path: "safe.svg", sizeBytes: Buffer.byteLength(safe), mimeType: "image/svg+xml" });
+    const content = result.content as { type: string; data?: string }[];
+    expect(Buffer.from(content.find(item => item.type === "image")!.data!, "base64").toString()).toBe(safe);
+    const denied = await client.callTool({ name: "read_image", arguments: { path: "unsafe.svg" } });
+    expect(denied.isError).toBe(true);
+    expect(textOf(denied)).toContain("BINARY_FILE");
   });
 
   it("read_image returns a decodable image block with transparency and bounded dimensions", async () => {
