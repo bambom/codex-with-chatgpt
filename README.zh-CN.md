@@ -7,7 +7,29 @@
 `write_file`、`apply_patch`、`run_command`，见[写入和执行配置](docs/writing.md)。
 命令使用电脑账户权限运行，没有系统沙箱隔离；已有只读授权不会自动升级。
 图片保存以及文件读取、写入、修改、命令执行已验证；网页对连接器图片的实际视觉
-理解尚未通过验证。下方原有流程描述的是默认只读模式。
+理解尚未通过验证。下方原有审查流程描述默认只读模式；单独授权后，也可以使用
+以下 UI 生产功能。
+
+## 在 ChatGPT 中制作游戏 UI
+
+使用现有工作区插件，把定稿、独立素材和统一语义布局制作成真正的分层 PSD、
+PNG 散图包、FGUI 原生 XML 源工程、完整预览和验证报告。先调用
+`ui_workflow_info` 获取能力、精确场景 schema 和随插件提供的 `ui-production`
+工作流；原文件可从工作区导入，也可通过校验 SHA-256 的分块上传传到本机。
+导出前会读取实际目标工程的格式依据。
+
+任务和文件保存在运行插件的电脑。默认输出到
+`<工作区>/generated/ui-deliveries/`；要用其他 Windows 目录，可在本机执行：
+
+```powershell
+c2c ui destination add --name game-ui --path "E:\UI-Deliveries" -w <实际工作区>
+```
+
+然后在 ChatGPT 选择已配置的 `game-ui`。ChatGPT 负责设计、图像生成与语义识别，
+插件负责文件传输、组装、导出和验证。已有真实编辑器/运行时验证适配器时，可在本机用
+`c2c ui validator add` 登记固定命令，再由 ChatGPT 使用 `ui_validate_native` 按已登记 ID
+触发检查。静态检查、编辑器导入、运行时交互分别报告，没有执行的检查保持未验证。
+完整说明见 [UI 生产工作流](docs/ui-workflow.md)。
 
 [English](README.md) | **简体中文**
 
@@ -113,19 +135,22 @@ Ready.
 - **控制面（Computer Use）**：Codex 与 ChatGPT 之间只交换极小的结构化 `[C2C]`
   状态消息——`INIT → PLAN → EXECUTED → REVIEW → DONE`。绝不粘贴 diff、日志
   或文件内容。
-- **数据面（MCP）**：ChatGPT 缺什么自己拉什么，共 9 个只读工具：
+- **数据面（MCP）**：ChatGPT 按需使用只读审查工具：
   `workspace_info`、`list_directory`、`read_file`、`search_workspace`、
   `git_status`、`git_diff`、`test_status`、`execution_summary`、
-  `execution_output`。
+  `execution_output`，以及 `read_image`。单独授予写入/执行权限后，才可使用
+  文件修改和 `ui_*` 生产工具。
 - **独立审查**：Codex 执行完毕后，ChatGPT 通过 MCP 亲自检查真实的 git diff
   和测试记录——绝不因为 Codex 说"测试全过"就直接相信。
 
 ## 安全模型（简版）
 
-- **从构造上只读**：服务端根本不存在写文件/删除/Shell/提交类工具，任何提示
-  注入都无法启用它们。
+- **默认只读**：已有只读令牌不能写文件、执行命令或修改 UI 任务；这些操作
+  分别要求明确授予 `workspace.write`、`workspace.execute`，默认权限不变。
 - **一个工作区 = 一道边界**：每个令牌绑定单一工作区；路径校验基于规范化
   realpath（symlink、`../`、绝对路径逃逸全部被拦截并有测试覆盖）。
+- **指定 UI 输出目录**：额外目录只能通过本机 CLI 登记，远程交付选择已经登记
+  的名称，不放宽普通工作区读写边界。
 - **敏感文件永不外泄**：`.env*`、密钥、SSH、各类凭据默认拒绝
   （`.env.example` 放行）；`.c2cignore` 可追加自定义规则。
 - **知道 URL 不等于有权限**：公网 MCP 端点强制 OAuth 2.1（PKCE S256、动态
@@ -159,7 +184,8 @@ c2c status / doctor / pair / unpair / logs / stop
 ```
 src/
   bridge/     本机回环 HTTP 服务、端口自动恢复、管理 API
-  mcp/        9 个只读工具、无状态 Streamable HTTP
+  mcp/        按 OAuth 权限区分的工具、无状态 Streamable HTTP
+  ui/         语义布局、源格式研究、PSD/FGUI 导出、持久任务与交付
   auth/       OAuth 2.1（PKCE、动态注册、refresh 轮换、吊销）
   pairing/    一次性配对码（CSPRNG、TTL、限速）
   workspace/  路径收敛、敏感文件策略、搜索、git

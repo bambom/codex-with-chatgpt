@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Production"
+  short_description: "Build layered PSD, PNG assets, and native FairyGUI projects"
+  default_prompt: "Use $ui-production to turn my approved UI design into a layered PSD, PNG assets, a FairyGUI source project, and validation reports."

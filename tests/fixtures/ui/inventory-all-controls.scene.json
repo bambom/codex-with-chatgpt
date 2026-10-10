@@ -1,0 +1,771 @@
+{
+  "schemaVersion": 1,
+  "id": "inventory",
+  "name": "Inventory",
+  "canvas": {
+    "width": 360,
+    "height": 480
+  },
+  "entry": "main",
+  "assets": [
+    {
+      "id": "skin",
+      "file": "images/skin.png",
+      "width": 16,
+      "height": 16,
+      "scale9grid": [
+        2,
+        2,
+        12,
+        12
+      ],
+      "provenance": "Procedural RGBA fixture for native control verification; not production artwork."
+    }
+  ],
+  "fonts": [
+    {
+      "id": "ui_font",
+      "file": "fonts/ChronicleUI-Regular.ttf",
+      "family": "Chronicle UI",
+      "licenseFile": "fonts/OFL.txt"
+    }
+  ],
+  "components": [
+    {
+      "id": "main",
+      "name": "Inventory",
+      "semantic": "Component",
+      "width": 360,
+      "height": 480,
+      "controllers": [
+        {
+          "name": "page",
+          "pages": [
+            {
+              "id": "first",
+              "name": "First"
+            },
+            {
+              "id": "second",
+              "name": "Second"
+            }
+          ],
+          "selectedPageId": "second",
+          "exported": true
+        }
+      ],
+      "children": [
+        {
+          "id": "use",
+          "name": "use",
+          "type": "Button",
+          "componentId": "action",
+          "x": 16,
+          "y": 16,
+          "width": 80,
+          "height": 40,
+          "instance": {
+            "title": "Equip"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "search",
+          "name": "search",
+          "type": "InputText",
+          "x": 16,
+          "y": 64,
+          "width": 200,
+          "height": 28,
+          "text": "Sword",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "input": {
+            "prompt": "Search",
+            "maxLength": 32
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "quantity",
+          "name": "quantity",
+          "type": "Slider",
+          "componentId": "slider",
+          "x": 16,
+          "y": 100,
+          "width": 200,
+          "height": 20,
+          "instance": {
+            "min": 0,
+            "max": 100,
+            "value": 25
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "experience",
+          "name": "experience",
+          "type": "ProgressBar",
+          "componentId": "progress",
+          "x": 16,
+          "y": 132,
+          "width": 200,
+          "height": 20,
+          "instance": {
+            "min": 0,
+            "max": 100,
+            "value": 75
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "category",
+          "name": "category",
+          "type": "ComboBox",
+          "componentId": "combo",
+          "x": 16,
+          "y": 168,
+          "width": 280,
+          "height": 40,
+          "instance": {
+            "title": "All",
+            "visibleItemCount": 2,
+            "items": [
+              {
+                "title": "All",
+                "value": "all"
+              },
+              {
+                "title": "Weapon",
+                "value": "weapon"
+              }
+            ]
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "inventory",
+          "name": "inventory",
+          "type": "List",
+          "x": 16,
+          "y": 224,
+          "width": 212,
+          "height": 120,
+          "list": {
+            "layout": "column",
+            "defaultItem": "row",
+            "overflow": "scroll",
+            "scroll": "vertical",
+            "scrollBar": "visible",
+            "verticalScrollBar": "scrollbar",
+            "selectionMode": "none",
+            "items": [
+              {
+                "name": "slot0",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 1"
+                  }
+                ]
+              },
+              {
+                "name": "slot1",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 2"
+                  }
+                ]
+              },
+              {
+                "name": "slot2",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 3"
+                  }
+                ]
+              },
+              {
+                "name": "slot3",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 4"
+                  }
+                ]
+              },
+              {
+                "name": "slot4",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 5"
+                  }
+                ]
+              },
+              {
+                "name": "slot5",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 6"
+                  }
+                ]
+              },
+              {
+                "name": "slot6",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 7"
+                  }
+                ]
+              },
+              {
+                "name": "slot7",
+                "properties": [
+                  {
+                    "target": "label",
+                    "property": "text",
+                    "value": "Item 8"
+                  }
+                ]
+              }
+            ]
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "pageMark",
+          "name": "pageMark",
+          "type": "Image",
+          "x": 300,
+          "y": 16,
+          "width": 16,
+          "height": 16,
+          "assetId": "skin",
+          "gears": [
+            {
+              "kind": "display",
+              "controller": "page",
+              "pages": [
+                "second"
+              ]
+            }
+          ],
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "autoEquip",
+          "name": "autoEquip",
+          "type": "Button",
+          "componentId": "checkbox",
+          "x": 16,
+          "y": 372,
+          "width": 100,
+          "height": 32,
+          "instance": {
+            "checked": false
+          },
+          "recognition": {
+            "basis": "Explicit Check-button fixture, no game callback."
+          }
+        },
+        {
+          "id": "selectedCategory",
+          "name": "selectedCategory",
+          "type": "Button",
+          "componentId": "option",
+          "x": 16,
+          "y": 414,
+          "width": 280,
+          "height": 28,
+          "instance": {
+            "title": "Weapon",
+            "checked": false
+          },
+          "recognition": {
+            "basis": "Explicit Radio-button fixture sharing the popup option template."
+          }
+        }
+      ]
+    },
+    {
+      "id": "action",
+      "name": "Action",
+      "semantic": "Button",
+      "width": 80,
+      "height": 40,
+      "extension": {
+        "button": {
+          "mode": "Common",
+          "downEffect": "dark",
+          "downEffectValue": 0.8
+        }
+      },
+      "children": [
+        {
+          "id": "skin",
+          "name": "skin",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 40,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "title",
+          "name": "title",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 40,
+          "text": "Use",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "option",
+      "name": "Option",
+      "semantic": "Button",
+      "width": 280,
+      "height": 28,
+      "extension": {
+        "button": {
+          "mode": "Radio"
+        }
+      },
+      "controllers": [
+        {
+          "name": "button",
+          "pages": [
+            {
+              "id": "u",
+              "name": "up"
+            },
+            {
+              "id": "d",
+              "name": "down"
+            }
+          ],
+          "selectedPageId": "u"
+        }
+      ],
+      "children": [
+        {
+          "id": "title",
+          "name": "title",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 280,
+          "height": 28,
+          "text": "Option",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          },
+          "gears": [
+            {
+              "kind": "color",
+              "controller": "button",
+              "values": {
+                "u": "#123456",
+                "d": "#FFFFFF"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "popup",
+      "name": "OptionsPopup",
+      "semantic": "Component",
+      "width": 280,
+      "height": 56,
+      "children": [
+        {
+          "id": "list",
+          "name": "list",
+          "type": "List",
+          "x": 0,
+          "y": 0,
+          "width": 280,
+          "height": 56,
+          "list": {
+            "layout": "column",
+            "defaultItem": "option",
+            "overflow": "scroll",
+            "scrollBar": "hidden",
+            "items": []
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "combo",
+      "name": "Category",
+      "semantic": "ComboBox",
+      "width": 280,
+      "height": 40,
+      "extension": {
+        "comboBox": {
+          "dropdown": "popup"
+        }
+      },
+      "children": [
+        {
+          "id": "title",
+          "name": "title",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 280,
+          "height": 40,
+          "text": "All",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "grip",
+      "name": "SliderGrip",
+      "semantic": "Button",
+      "width": 12,
+      "height": 20,
+      "extension": {
+        "button": {
+          "mode": "Common"
+        }
+      },
+      "children": [
+        {
+          "id": "skin",
+          "name": "skin",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 12,
+          "height": 20,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "slider",
+      "name": "Quantity",
+      "semantic": "Slider",
+      "width": 200,
+      "height": 20,
+      "extension": {
+        "slider": {
+          "titleType": "percent",
+          "wholeNumbers": true,
+          "changeOnClick": true
+        }
+      },
+      "children": [
+        {
+          "id": "bar",
+          "name": "bar",
+          "type": "Image",
+          "x": 8,
+          "y": 8,
+          "width": 184,
+          "height": 4,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "grip",
+          "name": "grip",
+          "type": "Button",
+          "componentId": "grip",
+          "x": 186,
+          "y": 0,
+          "width": 12,
+          "height": 20,
+          "instance": {},
+          "relations": [
+            {
+              "target": "bar",
+              "sidePair": "right-right"
+            }
+          ],
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "progress",
+      "name": "Experience",
+      "semantic": "ProgressBar",
+      "width": 200,
+      "height": 20,
+      "extension": {
+        "progressBar": {
+          "titleType": "valueAndmax"
+        }
+      },
+      "children": [
+        {
+          "id": "bar",
+          "name": "bar",
+          "type": "Image",
+          "x": 0,
+          "y": 6,
+          "width": 200,
+          "height": 8,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "title",
+          "name": "title",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 20,
+          "text": "0/100",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "scrollbar",
+      "name": "VerticalScrollBar",
+      "semantic": "ScrollBar",
+      "width": 12,
+      "height": 120,
+      "extension": {
+        "scrollBar": {
+          "fixedGripSize": false
+        }
+      },
+      "children": [
+        {
+          "id": "bar",
+          "name": "bar",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 12,
+          "height": 120,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "grip",
+          "name": "grip",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 12,
+          "height": 30,
+          "assetId": "skin",
+          "touchable": true,
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "row",
+      "name": "InventoryRow",
+      "semantic": "Component",
+      "width": 200,
+      "height": 24,
+      "children": [
+        {
+          "id": "label",
+          "name": "label",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 160,
+          "height": 24,
+          "text": "Label",
+          "style": {
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true,
+            "fontId": "ui_font"
+          },
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        },
+        {
+          "id": "icon",
+          "name": "icon",
+          "type": "Loader",
+          "x": 176,
+          "y": 4,
+          "width": 16,
+          "height": 16,
+          "assetId": "skin",
+          "recognition": {
+            "basis": "Authored semantic verification fixture with explicit native control roles."
+          }
+        }
+      ]
+    },
+    {
+      "id": "checkbox",
+      "name": "AutoEquip",
+      "semantic": "Button",
+      "width": 100,
+      "height": 32,
+      "extension": {
+        "button": {
+          "mode": "Check"
+        }
+      },
+      "controllers": [
+        {
+          "name": "button",
+          "pages": [
+            {
+              "id": "u",
+              "name": "up"
+            },
+            {
+              "id": "d",
+              "name": "down"
+            }
+          ],
+          "selectedPageId": "u"
+        }
+      ],
+      "children": [
+        {
+          "id": "skin",
+          "name": "skin",
+          "type": "Image",
+          "x": 0,
+          "y": 0,
+          "width": 100,
+          "height": 32,
+          "assetId": "skin"
+        },
+        {
+          "id": "title",
+          "name": "title",
+          "type": "Text",
+          "x": 0,
+          "y": 0,
+          "width": 100,
+          "height": 32,
+          "text": "Auto equip",
+          "style": {
+            "fontId": "ui_font",
+            "fontSize": 14,
+            "color": "#123456",
+            "autoSize": "none",
+            "singleLine": true
+          },
+          "gears": [
+            {
+              "kind": "color",
+              "controller": "button",
+              "values": {
+                "u": "#123456",
+                "d": "#FFFFFF"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "assumptions": [
+    "Generic inventory fixture, 360x480, independent of any submitted design.",
+    "Quantity 0..100 at 25; progress 0..100 at 75 are explicit verification data.",
+    "No game service callbacks are implemented."
+  ]
+}

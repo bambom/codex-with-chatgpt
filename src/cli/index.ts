@@ -57,6 +57,7 @@ import {
 } from "../session/state.js";
 import { appendExecutionRecord } from "../execution/records.js";
 import { saveExecutionOutput } from "../execution/output.js";
+import { registerUiCommands } from "./ui.js";
 
 const program = new Command();
 
@@ -1260,6 +1261,8 @@ program.command("import-image")
       else check(`图片已保存：${result.path}`);
     } catch (error) { handleCliError(error, opts.json); }
   });
+
+registerUiCommands(program);
 
 program.parseAsync(process.argv).catch((error: Error) => {
   cross(error.message);

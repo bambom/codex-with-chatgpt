@@ -9,7 +9,27 @@ plus separately authorized `write_file`, `apply_patch` and `run_command` tools
 privileges, not in a sandbox. Existing read-only tokens remain read-only.
 Image export/import and file read/write/patch/command execution were verified;
 ChatGPT visual understanding of connector image responses remains unverified.
-The original workflow below describes the default read-only mode.
+The review workflow below describes the default read-only mode; separately
+authorized tools also support the UI production workflow described next.
+
+## UI production from ChatGPT
+
+Use the existing workspace plugin to turn an approved UI design and semantic
+layout into layered PSD, PNG asset ZIPs, native FairyGUI source, previews, and
+validation reports. Start with `ui_workflow_info` for capabilities, the exact
+scene schema, and the bundled `ui-production` skill. Import original files or
+upload hash-checked chunks; inspect the real FairyGUI target before exporting.
+
+Jobs persist on the bridge computer. The default output is
+`<workspace>/generated/ui-deliveries/`. To use a Windows directory, configure a
+named destination locally with `c2c ui destination add --name game-ui --path
+"E:\UI-Deliveries" -w <workspace>`, then select `game-ui` in ChatGPT.
+The plugin builds and transfers files; ChatGPT performs the image generation and
+semantic analysis. Register an existing editor/runtime adapter locally with
+`c2c ui validator add`; ChatGPT can then run `ui_validate_native` by its configured
+ID. Static, editor-import, and runtime-interaction checks remain separate, with
+unavailable checks marked unverified. See the complete
+[UI production workflow](docs/ui-workflow.md).
 
 > ChatGPT thinks. Codex works.
 > ChatGPT 负责思考，Codex 负责干活。
@@ -181,21 +201,26 @@ Credentials stay in the OS app state directory, not in the project.
 - **Control plane (Computer Use)**: Codex and ChatGPT exchange tiny structured
   `[C2C]` state messages — `INIT → PLAN → EXECUTED → REVIEW → DONE`. No diffs,
   no logs, no file bodies are ever pasted.
-- **Data plane (MCP)**: ChatGPT pulls what it needs itself through 9 read-only
+- **Data plane (MCP)**: ChatGPT pulls what it needs through the read-only review
   tools: `workspace_info`, `list_directory`, `read_file`, `search_workspace`,
   `git_status`, `git_diff`, `test_status`, `execution_summary`,
-  `execution_output`.
+  `execution_output`, plus `read_image`. Explicit write/execute scopes enable
+  file mutations and the separate `ui_*` production tools.
 - **Independent review**: after Codex executes, ChatGPT inspects the actual
   git diff and test records through MCP — it never trusts "all tests passed"
   claims blindly.
 
 ## Security model (short version)
 
-- **Read-only by construction**: write/delete/shell/commit tools simply do not
-  exist on the server. No prompt injection can enable them.
+- **Read-only by default**: existing read tokens cannot write files, run
+  commands, or modify UI jobs. Optional mutations require explicit
+  `workspace.write`/`workspace.execute` scopes; token defaults are unchanged.
 - **One workspace = one boundary**: every token is bound to a single workspace;
   path containment uses canonical realpaths (symlink/`../`/absolute-path escapes
   are all blocked and tested).
+- **Named UI destinations**: only the local CLI can register an additional
+  output directory. Remote UI delivery selects a configured name; it does not
+  expand ordinary workspace file access.
 - **Sensitive files never leave**: `.env*`, keys, SSH, credentials are denied by
   default (`.env.example` allowed); `.c2cignore` adds your own rules.
 - **Knowing the URL grants nothing**: the public MCP endpoint requires OAuth 2.1
