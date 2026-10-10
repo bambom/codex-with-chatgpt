@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-10",
+  "implementationCommit": "5bef844",
+  "pluginVersion": "0.2.0",
+  "fixture": {
+    "name": "Synthetic inventory control verification",
+    "canvas": {
+      "width": 360,
+      "height": 480
+    },
+    "components": 12,
+    "resolvedNodes": 49
+  },
+  "tests": {
+    "linux": {
+      "files": 26,
+      "passed": 245
+    },
+    "windows": {
+      "files": 6,
+      "passed": 52
+    }
+  },
+  "job": {
+    "id": "ui_e22a4451c0644adebc89b3c05c0cf5d9",
+    "buildInputHash": "4cd01483c688456a9a4548c7ecc8e5c098813e51ce5a5417764da2996865290c",
+    "status": "delivered"
+  },
+  "target": {
+    "profileId": "target_273da517fa7c3771",
+    "sourceType": "Layabox",
+    "sourceVersion": "5.0",
+    "projectSha256": "74351dc19aa5b2c437b37e5022bb48597e82424db4eed1fc46aa0deb05289271",
+    "evidenceFiles": 68,
+    "limits": {
+      "files": 64,
+      "totalBytes": 2000000,
+      "fileBytes": 1000000,
+      "xmlBytes": 131072,
+      "xmlDepth": 32,
+      "objects": 256,
+      "serializedBytes": 8000000
+    },
+    "percentageRounding": "floor",
+    "runtimeProfileId": "laya-3.4.1-fgui-0a9368b-r00-a",
+    "nativeSourceDependencies": 91,
+    "sourceApiBundleSha256": "8db5eb1473295e421bb07c959543394555d4b93660e9c8989d0d7e43605a9a3a"
+  },
+  "gates": {
+    "static": "passed",
+    "psd": "passed",
+    "editorImport": {
+      "status": "passed",
+      "scope": "MagicGameClient source importer/exporter, disk save and reopen, pinned Laya/FairyGUI render",
+      "checks": [
+        "open",
+        "save",
+        "reopen",
+        "render"
+      ]
+    },
+    "runtimeInteraction": {
+      "status": "passed",
+      "checks": 12,
+      "types": [
+        "Button",
+        "InputText",
+        "Slider",
+        "ProgressBar",
+        "ComboBox",
+        "List",
+        "ScrollBar"
+      ]
+    },
+    "officialFairyGuiDesktop": "not_verified",
+    "photoshopGui": "not_verified",
+    "chatgptNewToolActivation": "pending"
+  },
+  "psd": {
+    "layers": 30,
+    "groups": 17,
+    "hiddenReference": true,
+    "layerMetadataMatches": true,
+    "layerPixelsExact": true,
+    "layerOrderMatches": true,
+    "compositor": {
+      "sameSize": true,
+      "changedPixels": 481,
+      "maximumChannelDifference": 1,
+      "maximumAlphaDifference": 1,
+      "maximumPremultipliedColorDifference": 1.3294117647058823
+    },
+    "cachedComposite": {
+      "sameSize": true,
+      "changedPixels": 2650,
+      "maximumChannelDifference": 86,
+      "maximumAlphaDifference": 0,
+      "maximumPremultipliedColorDifference": 1.3254901960784313
+    }
+  },
+  "nativeSource": {
+    "files": 17,
+    "totalBytes": 112417,
+    "resources": 14
+  },
+  "nativeRestoration": {
+    "status": "passed",
+    "changedPixels": 0,
+    "maximumChannelDifference": 0,
+    "initialSha256": "4cd16c03f79807d433a7fe939f609096c2aede2c36a2e1c4ee078a1650cf350a",
+    "restoredSha256": "4cd16c03f79807d433a7fe939f609096c2aede2c36a2e1c4ee078a1650cf350a"
+  },
+  "nativeMilliseconds": 9231,
+  "delivery": {
+    "fileCount": 83,
+    "totalBytes": 1164687,
+    "countsExcludeReceipt": true,
+    "receiptBytes": 18128,
+    "directoryFileCount": 84,
+    "directoryTotalBytes": 1182815,
+    "workspaceRelativePath": "generated/ui-deliveries/UI_Workflow_Native_Verification-5c0cf5d9"
+  },
+  "artifacts": [
+    {
+      "path": "FGUI_Source.zip",
+      "sizeBytes": 63415,
+      "sha256": "3f4a772a6578ddd5c41f300242379d9d67d308f12ff90b32956378ad4b6607de",
+      "mimeType": "application/zip"
+    },
+    {
+      "path": "Interface.psd",
+      "sizeBytes": 107635,
+      "sha256": "baeaae3bee35f3bbda830aaa0287b6d6eacdfec30f1394f3aa3d25877ecd7c57",
+      "mimeType": "image/vnd.adobe.photoshop"
+    },
+    {
+      "path": "PNG_Assets.zip",
+      "sizeBytes": 109845,
+      "sha256": "c7c75342372d391df0d84b7faa13ae82e13df62d7b666726fbced20d90b2d3f5",
+      "mimeType": "application/zip"
+    },
+    {
+      "path": "Previews/FGUI_Native.png",
+      "sizeBytes": 9455,
+      "sha256": "4cd16c03f79807d433a7fe939f609096c2aede2c36a2e1c4ee078a1650cf350a",
+      "mimeType": "image/png"
+    },
+    {
+      "path": "Previews/PSD_Composite.png",
+      "sizeBytes": 7360,
+      "sha256": "f634acb57551a46c651258bd3fd872d146fd3e5eda9c742423ff93b527c274ea",
+      "mimeType": "image/png"
+    }
+  ],
+  "limitations": [
+    "This fixture is synthetic verification data, not the user's final design artwork.",
+    "Image understanding, reconstruction and semantic authoring remain ChatGPT-host tasks.",
+    "The native pass covers the actual project workbench APIs and pinned Laya runtime; no official FairyGUI desktop or Photoshop GUI pass is asserted.",
+    "PSD/FGUI share initial layout; Pango/Laya text rasterization and preview backgrounds differ. Cross-renderer pixel identity is not asserted.",
+    "No game service callbacks or unknown hidden states were executed.",
+    "The currently connected bridge still runs the previous in-memory version until an independently managed restart and connector reconnection.",
+    "Remote Git push is pending explicit authorization after automatic approval review rejected publication."
+  ]
+}
