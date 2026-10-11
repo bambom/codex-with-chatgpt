@@ -1,16 +1,16 @@
 {
   "name": "@magicgamestudio/ui-design-contract",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "sourceRepository": "https://github.com/bambom/GameMagicTool.git",
-  "sourceCommit": "fd2ed9a897762c5cc12d4feae93be39d9653950c",
+  "sourceCommit": "800abb6c037b4d90dcc80cac0e8495b12135aa23",
   "sourcePath": "packages/ui-design-contract",
   "sourceBranch": "codex/ui-design-platform",
   "specDigest": "e53fa79ee947760f5c18631dea8d1cd12544715620309872a7702f97e55d301a",
-  "tarball": "magicgamestudio-ui-design-contract-0.2.0.tgz",
-  "tarballSha256": "5b06bef60a909e39d6ee209ff16fd78aef3056e4835abe55c8aac6f03392dc8c",
-  "build": "npm run build; npm test (59 checks); npm pack --ignore-scripts; pnpm install --offline --ignore-scripts",
+  "tarball": "magicgamestudio-ui-design-contract-0.3.0.tgz",
+  "tarballSha256": "8322c6b88189e4b05d5d5216004f89ea79b45c386ba0ccaf4651c86025a8f7c4",
+  "build": "npm run build; node --test test/online-publication.test.mjs (3 passed); npm pack --ignore-scripts; pnpm add --offline --ignore-scripts; plugin build and receipt test passed; real platform publication integration verified",
   "distribution": "Vendored immutable npm tarball pinned by pnpm-lock.yaml integrity; not published to a public registry",
   "runtimeDeployment": "Not deployed to the running plugin",
-  "onlineProtocolVersion": "1.0.0",
-  "onlineDigest": "7f8c7a6a0d06510aeefa51860170a7ae26ef8de43da38e69c1fffcdfd938a639"
+  "onlineProtocolVersion": "1.1.0",
+  "onlineDigest": "ebca3835c76a270cea16e276867d60cf4310bc309ed0c08b018a2c0dc29834cb"
 }

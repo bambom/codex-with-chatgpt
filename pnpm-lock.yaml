@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@magicgamestudio/ui-design-contract':
-        specifier: file:vendor\magicgamestudio-ui-design-contract-0.2.0.tgz
-        version: file:vendor/magicgamestudio-ui-design-contract-0.2.0.tgz
+        specifier: file:vendor\magicgamestudio-ui-design-contract-0.3.0.tgz
+        version: file:vendor/magicgamestudio-ui-design-contract-0.3.0.tgz
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@3.25.76)
@@ -387,9 +387,9 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@magicgamestudio/ui-design-contract@file:vendor/magicgamestudio-ui-design-contract-0.2.0.tgz':
-    resolution: {integrity: sha512-sinqNPCdToUZyxwoj8Yi1ArwzJHvoQGMmtofr84hqaKRfcJ8SonMTz0Cs3lHImRjok4+ExjqZd8cQ0+ELSmyRA==, tarball: file:vendor/magicgamestudio-ui-design-contract-0.2.0.tgz}
-    version: 0.2.0
+  '@magicgamestudio/ui-design-contract@file:vendor/magicgamestudio-ui-design-contract-0.3.0.tgz':
+    resolution: {integrity: sha512-Yx1s76dNkPsdPdMK+IBCG6AGTc52cJQVg8VWr8HIP+y7Xb8g0r9YRPuzU2pEF5l+BESqKcPcmHiivEVr/jMOBA==, tarball: file:vendor/magicgamestudio-ui-design-contract-0.3.0.tgz}
+    version: 0.3.0
     engines: {node: '>=22'}
 
   '@modelcontextprotocol/sdk@1.30.0':
@@ -1456,7 +1456,7 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@magicgamestudio/ui-design-contract@file:vendor/magicgamestudio-ui-design-contract-0.2.0.tgz':
+  '@magicgamestudio/ui-design-contract@file:vendor/magicgamestudio-ui-design-contract-0.3.0.tgz':
     dependencies:
       '@noble/hashes': 1.8.0
       ajv: 8.17.1

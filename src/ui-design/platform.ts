@@ -174,7 +174,7 @@ export async function platformValidate(workspace: Workspace, design: string, che
 export async function platformOnlineProtocol(workspace: Workspace) {
   const { credential, token } = await connected(workspace);
   const value = z.object({ protocolVersion: z.literal(ONLINE_VERSION), onlineDigest: z.literal(ONLINE_DIGEST), data: z.unknown(),
-    capabilities: z.object({ resumableIntake: z.boolean(), nativeImport: z.boolean(), formalSubmission: z.boolean() }) })
+    capabilities: z.object({ resumableIntake: z.boolean(), nativeImport: z.boolean(), formalSubmission: z.boolean(), nativeDraftPublication: z.boolean(), concurrentMerge: z.boolean() }) })
     .safeParse(await request(credential.server, "/online-protocol", "GET", undefined, token));
   if (!value.success || hashDocument(value.data.data as never) !== hashDocument(onlineProtocol() as never))
     return fail("PLATFORM_ONLINE_PROTOCOL_MISMATCH", "The platform intake protocol differs from the pinned plugin protocol.");
@@ -183,7 +183,8 @@ export async function platformOnlineProtocol(workspace: Workspace) {
 
 /** Internal fixed-design transport; credentials and endpoint selection never become tool arguments. */
 export async function platformIntakeRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown) {
-  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/files\/[0-9]{1,4})?)?$/.test(suffix))
+  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/files\/[0-9]{1,4})?)?$/.test(suffix)
+    && !/^\/revisions\/[1-9][0-9]{0,9}$/.test(suffix) && suffix !== "/publications")
     return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");
   const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");
   return request(credential.server, "/designs/" + design + suffix, method, body, token);

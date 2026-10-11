@@ -5,12 +5,23 @@ import { hashDocument, hashBytes } from '@magicgamestudio/ui-design-contract';
 import { SPEC_DIGEST } from '@magicgamestudio/ui-design-contract/spec';
 import { Workspace } from '../../dist/workspace/manager.js';
 import { pairPlatform, platformSpecification, platformOnlineProtocol, platformContext, platformCheckpoint, platformIntakeRequest, disconnectPlatform } from '../../dist/ui-design/platform.js';
-import { beginIntake, uploadIntakeBundle, intakeStatus } from '../../dist/ui-design/intake.js';
+import { beginIntake, uploadIntakeBundle, intakeStatus, submitIntakeBundle, readStandardRevision, publishNativeDraft } from '../../dist/ui-design/intake.js';
 const fixture=JSON.parse(await fs.readFile(process.argv[2],'utf8'));
 process.env.C2C_STATE_DIR=path.join(fixture.runDirectory,'state');
-const work=path.join(fixture.runDirectory,'workspace');await fs.mkdir(work);
+const work=path.join(fixture.runDirectory,'workspace');await fs.mkdir(work,{recursive:true});
 const workspace=new Workspace(work);
 try {
+  if(fixture.phase==='native') {
+    const context=await platformContext(workspace,fixture.designId);
+    const checkpoint=await platformCheckpoint(workspace,fixture.designId,context.nativeSequence,context.nativeSha256);
+    const requestId=randomUUID();const receipt=await publishNativeDraft(workspace,fixture.designId,requestId,checkpoint.checkpointId,context.standardRevision);
+    const retry=await publishNativeDraft(workspace,fixture.designId,requestId,checkpoint.checkpointId,context.standardRevision);
+    const revision=await readStandardRevision(workspace,fixture.designId,receipt.committedRevision);
+    if(JSON.stringify(receipt)!==JSON.stringify(retry)||receipt.origin!=='NATIVE_DRAFT'||receipt.nativeImported||!receipt.published
+      ||!revision.document.nodes.some(n=>n.id==='title'&&n.text.content==='标题中文'))throw Error('Native publication receipt/content mismatch');
+    const disconnected=await disconnectPlatform(workspace);
+    await fs.writeFile(path.join(fixture.runDirectory,'native-result.json'),JSON.stringify({receipt,retryExact:true,revisionRead:true,credentialRevoked:disconnected.revoked===true},null,2));
+  }else {
   await pairPlatform(workspace,fixture.server,fixture.pairingCode);
   const protocol=await platformOnlineProtocol(workspace);
   const context=await platformContext(workspace,fixture.designId);
@@ -20,6 +31,7 @@ try {
   const retry=await beginIntake(workspace,fixture.designId,requestId,checkpoint.checkpointId,context.standardRevision);
   if(retry.submissionId!==stage.submissionId)throw Error('Begin retry created another intake');
   const document=(await platformSpecification(workspace,'example')).data;document.designId=fixture.designId;
+  if(fixture.publication)document.nodes.find(n=>n.id==='title').text.color='#111111ff';
   const bundle=path.join(work,'bundle');await fs.mkdir(path.join(bundle,'files'),{recursive:true});await fs.mkdir(path.join(bundle,'outputs'));
   for(const name of ['source.png','reference.png','skin.png','skinNext.png','fixture-font.ttf'])
     await fs.copyFile(path.join(fixture.contractFixtures,'files',name),path.join(bundle,'files',name));
@@ -42,12 +54,21 @@ try {
   await fs.writeFile(skinPath,tampered);let localTamperRejected=false;
   try{await uploadIntakeBundle(workspace,args);}catch(error){localTamperRejected=error?.code==='FILE_HASH';}
   await fs.writeFile(skinPath,original);
-  const stored=await intakeStatus(workspace,fixture.designId,stage.submissionId);
-  const disconnected=await disconnectPlatform(workspace);
-  const result={liveProtocol:protocol.capabilities.resumableIntake===true,bundleStored:stored.state==='BUNDLE_STORED'&&stored.files.every(f=>f.stored),
+  let stored=await intakeStatus(workspace,fixture.designId,stage.submissionId),receipt=null;
+  if(fixture.publication) {
+    receipt=await submitIntakeBundle(workspace,args);
+    const retry=await submitIntakeBundle(workspace,args);
+    const revision=await readStandardRevision(workspace,fixture.designId,receipt.committedRevision);
+    if(JSON.stringify(receipt)!==JSON.stringify(retry)||hashDocument(revision.document)!==hashDocument(document))throw Error('Formal receipt/revision mismatch');
+    stored=await intakeStatus(workspace,fixture.designId,stage.submissionId);
+  }
+  const disconnected=fixture.keepConnection?{revoked:false}:await disconnectPlatform(workspace);
+  const result={liveProtocol:protocol.capabilities.resumableIntake===true,bundleStored:['BUNDLE_STORED','COMMITTED'].includes(stored.state)&&stored.files.every(f=>f.stored),
     resumePassed:uploaded.uploadedFiles===7&&uploaded.resumedFiles===1&&resumed.uploadedFiles===0&&resumed.resumedFiles===8,
     localTamperRejected,credentialRevoked:disconnected.revoked===true,formalSubmission:stored.submitted,publication:stored.published,
-    submissionId:stage.submissionId,retainedFiles:stored.files.length,nativeDocumentChanged:false,existingUserDataUsed:false};
-  if(!result.liveProtocol||!result.bundleStored||!result.resumePassed||!localTamperRejected||!result.credentialRevoked||result.formalSubmission||result.publication)throw Error('Intake assertion failed');
+    submissionId:stage.submissionId,retainedFiles:stored.files.length,nativeDocumentChanged:!!fixture.publication,existingUserDataUsed:false,receipt};
+  if(!result.liveProtocol||!result.bundleStored||!result.resumePassed||!localTamperRejected||(!fixture.keepConnection&&!result.credentialRevoked)
+    ||result.formalSubmission!==!!fixture.publication||result.publication!==!!fixture.publication)throw Error('Intake assertion failed');
   await fs.writeFile(path.join(fixture.runDirectory,'result.json'),JSON.stringify(result,null,2));
+  }
 }catch(error){process.stderr.write(JSON.stringify({error:error?.code??'PROBE_FAILED',message:error?.message??'Probe failed'})+'\n');process.exitCode=1;}

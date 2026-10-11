@@ -194,7 +194,7 @@ export function createMcpServer(ctx: McpContext): McpServer {
     { name: PRODUCT_NAME, version: VERSION },
     { capabilities: { tools: {} }, instructions:
       "For design-to-PSD/PNG/FGUI requests, call ui_workflow_info action=guidance, then follow the persistent job workflow; image analysis/generation happens in the ChatGPT host. " +
-      "For the independent MagicGameStudio UI design platform, use ui_design_spec and ui_design_precheck for offline preparation. When locally paired, use ui_design_platform_spec, ui_design_context, ui_design_checkpoint and ui_design_platform_validate for live platform checks. Use ui_design_online_protocol and ui_design_submission_begin/status/upload/cancel for complete candidate intake and resumable verified file retention. BUNDLE_STORED, local precheck and server validation are not a formal save or publication receipt. " + UNTRUSTED_NOTE }
+      "For the independent MagicGameStudio UI design platform, use ui_design_spec and ui_design_precheck for offline preparation. When locally paired, verify ui_design_platform_spec and ui_design_online_protocol; use ui_design_context/checkpoint to pin the native state. Start intake with ui_design_submission_begin; ui_design_submit uploads, validates and conditionally publishes the complete bundle. Individual submission status/upload/validate/commit/cancel tools support recovery. Only the shared-schema-verified persisted COMMITTED receipt confirms publication. Use ui_design_revision to read immutable results and ui_design_publish_native to publish supported saved native edits. BUNDLE_STORED and validation alone are not publication. " + UNTRUSTED_NOTE }
   );
 
   server.registerTool(
