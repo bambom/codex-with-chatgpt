@@ -26,7 +26,7 @@ beforeAll(async () => {
       const spec = getSpecification((url.searchParams.get("section") ?? "summary") as never);
       response.end(JSON.stringify({ ...spec, liveServer: true, source: "platform-server", specDigest: invalidSpec ? "c".repeat(64) : spec.specDigest })); return;
     }
-    if (url.pathname.endsWith("/context")) { response.end(JSON.stringify({ designId: design, title: "Live design", accessRole: "OWNER", nativeSequence: 5, nativeSha256: digest, pageCount: 1, standardStatus: "UNPUBLISHED" })); return; }
+    if (url.pathname.endsWith("/context")) { response.end(JSON.stringify({ designId: design, title: "Live design", accessRole: "OWNER", nativeSequence: 5, nativeSha256: digest, pageCount: 1, standardStatus: "UNPUBLISHED", standardRevision: 0 })); return; }
     if (url.pathname.endsWith("/checkpoints")) {
       if (JSON.parse(body).expectedNativeSequence !== 5) { response.statusCode = 409; response.end("{}"); return; }
       response.end(JSON.stringify({ id: checkpoint, designId: design, nativeSequence: 5, nativeSha256: digest, nativeDocument: { A: [] } })); return;

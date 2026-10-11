@@ -35,7 +35,7 @@ export interface PrecheckInput {
 function requireInput(condition: unknown, message: string): asserts condition {
   if (!condition) throw new UiWorkflowError("INVALID_ARGUMENTS", message);
 }
-async function readBounded(
+export async function readBounded(
   workspace: Workspace,
   relative: string,
   limit: number,

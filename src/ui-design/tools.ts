@@ -7,7 +7,8 @@ import { Workspace, WorkspaceError } from "../workspace/manager.js";
 import type { Logger } from "../logger/index.js";
 import { UiWorkflowError } from "../ui/storage.js";
 import { precheckAuthoring } from "./precheck.js";
-import { platformStatus, platformSpecification, platformContext, platformCheckpoint, platformValidate } from "./platform.js";
+import { platformStatus, platformSpecification, platformContext, platformCheckpoint, platformValidate, platformOnlineProtocol } from "./platform.js";
+import { beginIntake, intakeStatus, uploadIntakeBundle, cancelIntake } from "./intake.js";
 
 const section = z.enum([
   "summary",
@@ -156,5 +157,37 @@ export function registerUiDesignTools(
   }, async (args, extra) => {
     if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
     return call(extra.authInfo?.scopes, async () => { const report = await platformValidate(ctx.workspace, args.design_id, args.checkpoint_id, args.document_json); return { ...report, valid: report.validation.valid }; });
+  });
+  server.registerTool("ui_design_online_protocol", {
+    title: "Read the platform submission intake protocol", description: "Read and verify the separate live intake protocol, routes, byte limits and enabled capabilities. The frozen authoring 0.1 API proposal does not describe these native-checkpoint routes. Intake stores a candidate; it does not issue a formal publication receipt.",
+    inputSchema: {}, annotations: onlineRead,
+  }, async (_args, extra) => call(extra.authInfo?.scopes, () => platformOnlineProtocol(ctx.workspace)));
+  const submissionId = z.string().regex(/^S[a-f0-9]{32}$/);
+  const onlineWrite = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true };
+  server.registerTool("ui_design_submission_begin", {
+    title: "Begin a platform UI candidate upload", description: "Bind a new candidate intake to a current immutable native checkpoint and standard revision. Supply a stable request UUID and reuse it after uncertain network results. Returns a server-generated submission ID for the manifest. Requires workspace.write and design.submit. Does not edit the native document or publish a standard revision.",
+    inputSchema: { design_id: designId, request_id: z.string().uuid(), checkpoint_id: z.string().uuid(), base_revision: z.number().int().min(0).max(1e9) }, annotations: onlineWrite,
+  }, async (args, extra) => {
+    if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
+    return call(extra.authInfo?.scopes, () => beginIntake(ctx.workspace, args.design_id, args.request_id, args.checkpoint_id, args.base_revision));
+  });
+  server.registerTool("ui_design_submission_status", {
+    title: "Read retained platform candidate state", description: "Read this actor's persistent candidate and per-file retention status. Use after interruption or an uncertain upload. BUNDLE_STORED means declared file bytes are retained; submitted:false and published:false must not be reported as a formal save or receipt.",
+    inputSchema: { design_id: designId, submission_id: submissionId }, annotations: onlineRead,
+  }, async (args, extra) => call(extra.authInfo?.scopes, () => intakeStatus(ctx.workspace, args.design_id, args.submission_id)));
+  server.registerTool("ui_design_submission_upload", {
+    title: "Upload or resume a complete UI candidate bundle", description: "Read a document, manifest and their exact referenced files from the connected workspace, preflight all hashes, bind the immutable candidate and upload missing files to the configured platform. Include original/approved images, assets, fonts, preview, overview and provenance as required by the manifest. Repeating resumes whole missing files. Never follows endpoint arguments or uploads files outside the workspace. Requires workspace.write and design.submit. The result is retained candidate bytes, not publication or a formal receipt.",
+    inputSchema: { design_id: designId, submission_id: submissionId, document_path: PATH, manifest_path: PATH, package_directory: PATH }, annotations: onlineWrite,
+  }, async (args, extra) => {
+    if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
+    return call(extra.authInfo?.scopes, () => uploadIntakeBundle(ctx.workspace, { designId: args.design_id, submissionId: args.submission_id,
+      documentPath: args.document_path, manifestPath: args.manifest_path, packageDirectory: args.package_directory }));
+  });
+  server.registerTool("ui_design_submission_cancel", {
+    title: "Cancel a platform candidate intake", description: "Stop further changes to this actor's candidate intake. Retained bytes remain in platform asset storage. Does not delete or change the native design. Requires workspace.write and design.submit.",
+    inputSchema: { design_id: designId, submission_id: submissionId }, annotations: onlineWrite,
+  }, async (args, extra) => {
+    if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
+    return call(extra.authInfo?.scopes, () => cancelIntake(ctx.workspace, args.design_id, args.submission_id));
   });
 }

@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { z } from "zod";
 import { getSpecification, SPEC_DIGEST, SPEC_VERSION, type SpecSection } from "@magicgamestudio/ui-design-contract/spec";
 import { hashDocument, parseStrict } from "@magicgamestudio/ui-design-contract";
+import { ONLINE_VERSION, ONLINE_DIGEST, onlineProtocol } from "@magicgamestudio/ui-design-contract/online";
 import type { Workspace } from "../workspace/manager.js";
 import { atomicJson, containedPath, readJson, stateRoot, withLock, UiWorkflowError } from "../ui/storage.js";
 
@@ -20,7 +21,7 @@ const exchangeSchema = z.object({
 });
 const contextSchema = z.object({
   designId: z.string(), title: z.string(), accessRole: z.string(), nativeSequence: z.number().int().nonnegative(),
-  nativeSha256: z.string().regex(/^[a-f0-9]{64}$/), pageCount: z.number().int().nonnegative(), standardStatus: z.string(),
+  nativeSha256: z.string().regex(/^[a-f0-9]{64}$/), pageCount: z.number().int().nonnegative(), standardStatus: z.string(), standardRevision: z.number().int().nonnegative(),
 });
 const MAX_RESPONSE = 8 * 1024 * 1024;
 function fail(code: string, message: string): never { throw new UiWorkflowError(code, message); }
@@ -67,10 +68,11 @@ async function dpapi(input: string, decrypt: boolean): Promise<string> {
 async function request(server: string, route: string, method = "GET", body?: unknown, token?: string): Promise<unknown> {
   const headers: Record<string, string> = { Accept: "application/json", "X-UI-Design-Transport": "ui-design-native-1" };
   if (token) headers.Authorization = "Bearer " + token;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const binary = Buffer.isBuffer(body);
+  if (body !== undefined) headers["Content-Type"] = binary ? "application/octet-stream" : "application/json";
   let response: Response;
-  try { response = await fetch(server + "/api/v1" + route, { method, headers, body: body === undefined ? undefined : JSON.stringify(body),
-    redirect: "error", signal: AbortSignal.timeout(30000), credentials: "omit" }); }
+  try { response = await fetch(server + "/api/v1" + route, { method, headers, body: body === undefined ? undefined : binary ? new Uint8Array(body) : JSON.stringify(body),
+    redirect: "error", signal: AbortSignal.timeout(binary ? 120000 : 30000), credentials: "omit" }); }
   catch { return fail("PLATFORM_UNREACHABLE", "Could not reach the configured platform; no completion is confirmed."); }
   if (!response.ok) {
     await response.body?.cancel();
@@ -167,4 +169,22 @@ export async function platformValidate(workspace: Workspace, design: string, che
     .safeParse(await request(credential.server, "/designs/" + design + "/validate", "POST", { checkpointId, specDigest: SPEC_DIGEST, document }, token));
   if (!value.success || value.data.checkpointId !== checkpointId) return fail("PLATFORM_RESPONSE_INVALID", "Platform returned an invalid validation report.");
   return value.data;
+}
+
+export async function platformOnlineProtocol(workspace: Workspace) {
+  const { credential, token } = await connected(workspace);
+  const value = z.object({ protocolVersion: z.literal(ONLINE_VERSION), onlineDigest: z.literal(ONLINE_DIGEST), data: z.unknown(),
+    capabilities: z.object({ resumableIntake: z.boolean(), nativeImport: z.boolean(), formalSubmission: z.boolean() }) })
+    .safeParse(await request(credential.server, "/online-protocol", "GET", undefined, token));
+  if (!value.success || hashDocument(value.data.data as never) !== hashDocument(onlineProtocol() as never))
+    return fail("PLATFORM_ONLINE_PROTOCOL_MISMATCH", "The platform intake protocol differs from the pinned plugin protocol.");
+  return value.data;
+}
+
+/** Internal fixed-design transport; credentials and endpoint selection never become tool arguments. */
+export async function platformIntakeRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown) {
+  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/files\/[0-9]{1,4})?)?$/.test(suffix))
+    return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");
+  const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");
+  return request(credential.server, "/designs/" + design + suffix, method, body, token);
 }

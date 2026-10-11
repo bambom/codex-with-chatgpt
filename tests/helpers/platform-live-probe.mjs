@@ -12,6 +12,7 @@ try {
   if(!pair.connected||'accessToken' in pair||'secret' in pair)throw Error('Unsafe public connection metadata');
   const summary=await platformSpecification(workspace);
   const example=await platformSpecification(workspace,'example');
+  example.data.designId=fixture.designId;
   const context=await platformContext(workspace,fixture.designId);
   const checkpoint=await platformCheckpoint(workspace,fixture.designId,context.nativeSequence,context.nativeSha256);
   const validation=await platformValidate(workspace,fixture.designId,checkpoint.checkpointId,JSON.stringify(example.data));
