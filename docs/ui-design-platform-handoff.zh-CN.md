@@ -2,6 +2,8 @@
 
 日期：2026-10-10。状态：已根据实施准备评审调整计划，新功能尚未实现。下文用于交给后续开发会话；本文本身不证明任何阶段已通过。
 
+2026-10-11：已开始实施，当前从 [首批实现记录](ui-design-contract-progress.zh-CN.md) 继续。平台施工目录为 `E:\Workspace\Project-Revert\MagicGameStudio-ui-design`（稀疏 worktree），插件为 `C:\Users\bambo\codex-with-chatgpt-ui-design`；两仓库实现分支均为 `codex/ui-design-platform`。下面旧路径仅是来源说明，不要在原 FGUI/插件主工作区继续施工。
+
 ## 1. 接手范围与阅读顺序
 
 接手 MagicGameStudio 的独立“UI 设计”功能，先核对现场，再从 P0-A 开始实施。目标是可运行的新首页入口、新编辑窗口、独立服务器业务、GPT 插件结果接入，以及平台按需 PSD/FGUI 导出。

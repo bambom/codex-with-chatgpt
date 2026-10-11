@@ -1,5 +1,7 @@
 # UI production in the existing ChatGPT plugin
 
+For the independent UI design platform, the first implemented preparation tools are `ui_design_spec` and `ui_design_precheck`. They consume the platform-owned contract and need no FGUI project. See [implementation status and limitations](ui-design-contract-progress.zh-CN.md). A local precheck PASS is not a platform save.
+
 The connected **Codex with ChatGPT** plugin can assemble a game UI into real layered PSD, PNG assets, FairyGUI editor source XML, previews, and validation reports. Jobs, uploaded materials, revisions, and results persist on the computer running the bridge. The existing workspace connection and OAuth scopes continue to apply.
 
 ChatGPT supplies the design decisions, image generation, material separation, transcription, and semantic scene. The plugin performs bounded file transfer, source-format inspection, deterministic export, validation, and local delivery. It does not call an image-generation API or automatically recover a complete editable UI from a screenshot.

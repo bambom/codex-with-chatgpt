@@ -8,7 +8,7 @@
     "c2c": "./bin/c2c.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -19,6 +19,7 @@
   },
   "packageManager": "pnpm@11.24.0",
   "dependencies": {
+    "@magicgamestudio/ui-design-contract": "file:vendor\\magicgamestudio-ui-design-contract-0.1.0.tgz",
     "@modelcontextprotocol/sdk": "1.30.0",
     "ag-psd": "31.0.3",
     "commander": "^14.0.0",

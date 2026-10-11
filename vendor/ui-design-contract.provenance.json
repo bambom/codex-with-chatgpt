@@ -1,0 +1,14 @@
+{
+  "name": "@magicgamestudio/ui-design-contract",
+  "version": "0.1.0",
+  "sourceRepository": "https://github.com/bambom/GameMagicTool.git",
+  "sourceCommit": "5bd104070dcc3e7e3ab6583eb285e874e4bf08ba",
+  "sourcePath": "packages/ui-design-contract",
+  "sourceBranch": "codex/ui-design-platform",
+  "specDigest": "e53fa79ee947760f5c18631dea8d1cd12544715620309872a7702f97e55d301a",
+  "tarball": "magicgamestudio-ui-design-contract-0.1.0.tgz",
+  "tarballSha256": "7551ed503f1e07d1e785137781264735130696c2f8088be386e7f88837e0e9b0",
+  "build": "npm ci --ignore-scripts; npm test; npm pack --ignore-scripts",
+  "distribution": "Vendored immutable npm tarball pinned by pnpm-lock.yaml integrity; not published to a public registry",
+  "runtimeDeployment": "Not deployed to the running plugin"
+}

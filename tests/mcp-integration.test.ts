@@ -97,6 +97,8 @@ describe("MCP tools over Streamable HTTP", () => {
       "ui_build",
       "ui_create_job",
       "ui_deliver",
+      "ui_design_precheck",
+      "ui_design_spec",
       "ui_finish_upload",
       "ui_import_file",
       "ui_inspect_target",
