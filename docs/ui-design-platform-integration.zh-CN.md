@@ -1,5 +1,7 @@
 # UI 设计平台：复制 AI 图层编辑器客户端与服务器的实施方案
 
+2026-10-12 标准主线进展：平台提交 [`b51f5d6833`](https://github.com/bambom/GameMagicTool/commit/b51f5d68332b7c70f9ee418bf19d67dd406b37f5) 已实现共享规范在线读取、精确原生 checkpoint、服务器标准校验、一次性受限配对和撤销。插件新增本地连接/状态/断开命令及在线规范、上下文、checkpoint、校验工具；Windows 凭证使用 DPAPI，工具不返回凭证。插件构建与 14 项检查通过，三个平台临时数据库集成场景通过，其中包括真实插件配对和在线往返。正式素材上传、原生桥接与提交回执尚在实施；当前校验结果明确 `submitted=false`、`published=false`。见[标准在线接入与证据](https://github.com/bambom/GameMagicTool/blob/b51f5d68332b7c70f9ee418bf19d67dd406b37f5/docs/ui-design/STANDARD-INTEGRATION.md)。停止独立基线推进，下一批直接实现正式提交。
+
 ## 当前优先级（2026-10-12 用户修订）
 
 主线为平台统一标准与插件在线提交。停止持续开展原功能基线验收；完整源码和已有功能保持，只有实际阻塞这条主线时才处理相关基线问题。未验项目保留为后续按需事项，不作为 P1/P2/P3 开发的统一前置门槛，不宣称 B2 全部通过。
