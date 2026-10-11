@@ -1,6 +1,6 @@
 # UI 设计平台：复制式二次开发交接
 
-2026-10-11 实施进展：平台提交 [`2186e79f1f`](https://github.com/bambom/GameMagicTool/commit/2186e79f1fb76b481017261cff8d2b7d90a803f5) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，在临时 PostgreSQL 和真实 Electron 中验证文本插入、修改、撤销、重做、逐事务保存确认和重开。143 个继承 REST 控制器全部保留私有映射；34 项单元检查、6 项完整宿主装配检查通过。七个原侧栏入口已观察，但部分面板仍有缺失资源或服务错误；固定 editor runtime 的完整字面依赖对照发现原采集包遗漏 3,569 个资源，正在显式补采。**B2 完整原功能、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/2186e79f1fb76b481017261cff8d2b7d90a803f5/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
+2026-10-11 实施进展：平台提交 [`77a3c9ae5a`](https://github.com/bambom/GameMagicTool/commit/77a3c9ae5a7de21908a879b3aa3961e8dc9fa850) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，真实 Electron 与临时 PostgreSQL 验证文本编辑、撤销/重做、逐事务保存、重开及私有字体实际读取和跨账号拒绝；最新宿主/窗口检查 7 项通过。补齐 3,569 个固定 JS/CSS、4 个 WASM 和 4 张背景图，递归字面依赖核验 7,340 项、缺项为零；7 项相关 Node 检查通过。143 个继承 REST 控制器保留，补齐字体路由后共 147 个私有控制器。七个侧栏、位置面板和原生图层列表已加载，但观察入口不代表完整业务通过。**B2 完整原功能、动态资源、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/77a3c9ae5a7de21908a879b3aa3961e8dc9fa850/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
 
 更新：2026-10-11。当前已按详细调研、客户端与服务器计划进入副本实施。**原代码保持不动；复制 AI 图层编辑器及服务端可用实现，形成新系统后再二次开发。** 以当前完整 AI 图层编辑器的源码、客户端功能和业务逻辑作为整体开发基线，默认继承原全部可用功能并增量实现新需求。图层、选择、编辑、通信、保存等只是例子，不是从原产品挑出的有限保留范围。
 
