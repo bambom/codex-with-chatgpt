@@ -212,3 +212,31 @@ export async function publishNativeDraft(workspace: Workspace, design: string, r
     return fail("PLATFORM_RESPONSE_INVALID", "Native publication receipt did not bind the requested checkpoint.");
   return receipt;
 }
+export async function readStandardHistory(workspace: Workspace, design: string, before = 0, limit = 50) {
+  z.number().int().min(0).max(1e9 + 1).parse(before); z.number().int().min(1).max(100).parse(limit);
+  const raw = z.object({ designId: z.literal(design), headRevision: z.number().int().min(0).max(1e9), revisions: z.array(z.unknown()).max(limit),
+    nextBefore: z.number().int().min(1).max(1e9).nullable() }).parse(await platformIntakeRequest(workspace, design, "/revisions?before=" + before + "&limit=" + limit, "GET"));
+  const revisions = raw.revisions.map(r => checkedReceipt(r, design));
+  let previous = before || raw.headRevision + 1;
+  for (const revision of revisions) {
+    if (revision.committedRevision >= previous || revision.committedRevision > raw.headRevision) return fail("PLATFORM_RESPONSE_INVALID", "History revisions are not in descending order.");
+    previous = revision.committedRevision;
+  }
+  if (raw.nextBefore !== null && (revisions.length !== limit || raw.nextBefore !== previous)) return fail("PLATFORM_RESPONSE_INVALID", "History cursor does not bind the last revision.");
+  return { ...raw, revisions };
+}
+export async function readCopySource(workspace: Workspace, design: string, revision: number) {
+  const published = await readStandardRevision(workspace, design, revision), source = published.receipt.copySource;
+  if (published.receipt.origin !== "DESIGN_COPY" || !source) return fail("COPY_SOURCE_UNAVAILABLE", "This revision is not a copied design revision.");
+  const value = await platformIntakeRequest(workspace, design, "/revisions/" + revision + "/copy-source", "GET");
+  const archive = z.object({ format: z.literal("ui-design-copy-source-1"), sourceDesignId: z.literal(source.designId), sourceRevision: z.literal(source.revision),
+    sourceReceiptHash: z.literal(source.receiptHash), copyRequestId: z.literal(source.copyRequestId), originalText: z.object({ receipt: z.string() }),
+    revision: z.object({ receipt: z.unknown() }), files: z.array(z.object({ path: z.string().max(512), sha256: sha, byteLength: z.number().int().positive().max(ONLINE_LIMITS.fileBytes) })).max(16384) }).passthrough().parse(value);
+  const original = checkedReceipt(archive.revision.receipt, source.designId);
+  if (hashDocument(value as never) !== source.archiveSha256 || hashBytes(new TextEncoder().encode(archive.originalText.receipt)) !== source.receiptHash
+    || hashDocument(parseStrict(archive.originalText.receipt)) !== hashDocument(archive.revision.receipt as never)
+    || original.committedRevision !== source.revision || original.committedDocumentHash !== source.documentHash || original.committedAssetManifestHash !== source.assetManifestHash
+    || new Set(archive.files.map(f => f.path)).size !== archive.files.length)
+    return fail("PLATFORM_RESPONSE_INVALID", "Copy source archive does not match its persisted provenance.");
+  return value;
+}

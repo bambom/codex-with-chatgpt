@@ -1,16 +1,16 @@
 {
   "name": "@magicgamestudio/ui-design-contract",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "sourceRepository": "https://github.com/bambom/GameMagicTool.git",
-  "sourceCommit": "778d4ced4dd98c39bb2a268951020c2856607317",
+  "sourceCommit": "52a88d869c5f1cf7aa926db597652eed4c109fa0",
   "sourcePath": "packages/ui-design-contract",
   "sourceBranch": "codex/ui-design-platform",
   "specDigest": "e53fa79ee947760f5c18631dea8d1cd12544715620309872a7702f97e55d301a",
-  "tarball": "magicgamestudio-ui-design-contract-0.5.0.tgz",
-  "tarballSha256": "97cf53ebff4d1ad5e558ca66eb2568c6d079a0cd1310b01ce20afc52d1c894dd",
-  "build": "Shared online contract: 6 passed. Five distinct Java finite merge scenarios passed after invalid test fixture corrections. Plugin build and 5 focused checks passed; changed publication checks retested (2 passed). Four real PostgreSQL merge scenarios verified across initial/repair batches, actual Electron + plugin merge passed, 4 affected publication regression scenarios passed. npm pack --ignore-scripts; pnpm add --offline --ignore-scripts.",
+  "tarball": "magicgamestudio-ui-design-contract-0.6.0.tgz",
+  "tarballSha256": "1788316bc6a3cb780349e5c8522d64f6260a7ec58a869bf025cc091c8893f624",
+  "build": "Shared online contract: 7 passed. Plugin build and 4 focused checks passed. Native retargeting check passed. Four distinct PostgreSQL copy/lifecycle scenarios passed across initial/repair batches, with final archive preparation and real plugin retest passed. Actual copied Electron editor text edit, undo/redo, reopen and native publication passed after source removal. npm pack --ignore-scripts; pnpm add --offline --ignore-scripts.",
   "distribution": "Vendored immutable npm tarball pinned by pnpm-lock.yaml integrity; not published to a public registry",
   "runtimeDeployment": "Not deployed to the running plugin",
-  "onlineProtocolVersion": "1.3.0",
-  "onlineDigest": "369417d7a983b776d6e5654e7cdc9391ba6bb7435927c20fa99f4a64b0613e48"
+  "onlineProtocolVersion": "1.4.0",
+  "onlineDigest": "ba09c3d28fcddcea216171d04b38eb8f8acb398f4311ae587e108efb05bba674"
 }
