@@ -58,6 +58,7 @@ import {
 import { appendExecutionRecord } from "../execution/records.js";
 import { saveExecutionOutput } from "../execution/output.js";
 import { registerUiCommands } from "./ui.js";
+import { registerUiDesignCommands } from "./ui-design.js";
 
 const program = new Command();
 
@@ -1263,6 +1264,7 @@ program.command("import-image")
   });
 
 registerUiCommands(program);
+registerUiDesignCommands(program);
 
 program.parseAsync(process.argv).catch((error: Error) => {
   cross(error.message);

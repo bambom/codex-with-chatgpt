@@ -1,5 +1,9 @@
 # 独立 UI 设计平台：首批实现
 
+2026-10-12 标准主线进展：平台提交 [`b51f5d6833`](https://github.com/bambom/GameMagicTool/commit/b51f5d68332b7c70f9ee418bf19d67dd406b37f5) 已实现共享规范在线读取、精确原生 checkpoint、服务器标准校验、一次性受限配对和撤销。插件新增本地连接/状态/断开命令及在线规范、上下文、checkpoint、校验工具；Windows 凭证使用 DPAPI，工具不返回凭证。插件构建与 14 项检查通过，三个平台临时数据库集成场景通过，其中包括真实插件配对和在线往返。正式素材上传、原生桥接与提交回执尚在实施；当前校验结果明确 `submitted=false`、`published=false`。见[标准在线接入与证据](https://github.com/bambom/GameMagicTool/blob/b51f5d68332b7c70f9ee418bf19d67dd406b37f5/docs/ui-design/STANDARD-INTEGRATION.md)。停止独立基线推进，下一批直接实现正式提交。
+
+以下是此前契约与复制阶段的历史记录，当前执行顺序以上述标准主线为准。
+
 2026-10-11 实施进展：平台提交 [`77a3c9ae5a`](https://github.com/bambom/GameMagicTool/commit/77a3c9ae5a7de21908a879b3aa3961e8dc9fa850) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，真实 Electron 与临时 PostgreSQL 验证文本编辑、撤销/重做、逐事务保存、重开及私有字体实际读取和跨账号拒绝；最新宿主/窗口检查 7 项通过。补齐 3,569 个固定 JS/CSS、4 个 WASM 和 4 张背景图，递归字面依赖核验 7,340 项、缺项为零；7 项相关 Node 检查通过。143 个继承 REST 控制器保留，补齐字体路由后共 147 个私有控制器。七个侧栏、位置面板和原生图层列表已加载，但观察入口不代表完整业务通过。**B2 完整原功能、动态资源、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/77a3c9ae5a7de21908a879b3aa3961e8dc9fa850/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
 
 日期：2026-10-11。平台和插件分别使用独立 `codex/ui-design-platform` 分支；本目录为 `C:\Users\bambo\codex-with-chatgpt-ui-design`，没有切换正在运行插件的主 checkout。
