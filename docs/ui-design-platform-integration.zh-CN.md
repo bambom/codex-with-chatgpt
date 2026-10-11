@@ -1,5 +1,9 @@
 # UI 设计平台：复制 AI 图层编辑器客户端与服务器的实施方案
 
+2026-10-12 上传恢复与错误定位已完成：平台提交 [`2e367b2e83`](https://github.com/bambom/GameMagicTool/commit/2e367b2e837c82eade08e2a8a95eacb118acc2a6) 增加持久 1 MiB 顺序块、准确 nextOffset/重复块身份、过期/取消释放、文件完整 hash 检查，以及带字段路径和查询身份的错误。真实插件新进程接续首块；完整服务端 JVM 重启后也恢复并完成上传。首批插件场景通过，另 3 项被错误 JSON 数值表示差异阻断；修复后仅补跑这 3 项及第二 JVM 恢复，全部通过，容器均移除。共享包 0.4.0 / 在线 1.2.0，保留旧 1.1 正式回执读取，作者 0.1 摘要不变。共享 5 项、插件 4 项和 Java 编译通过。见[上传恢复证据与边界](https://github.com/bambom/GameMagicTool/blob/2e367b2e837c82eade08e2a8a95eacb118acc2a6/docs/ui-design/UPLOAD-RECOVERY.md)。有限合并/最终重校验、完整标准生命周期和平台目标导出继续实施；未部署。
+
+以下为此前批次记录，当前进度以上段为准。
+
 2026-10-12 正式发布主线已完成：平台提交 [`800abb6c03`](https://github.com/bambom/GameMagicTool/commit/800abb6c037b4d90dcc80cac0e8495b12135aa23) 实现候选验证、全部输入/原生资源冻结、条件原生导入、标准修订和持久回执，以及原生草稿再次发布。真实插件上传 8 文件后提交为 r1；原界面改中文标题并 Undo/Redo，再由插件发布为 r2、重开保持，原生序号为 4。回执幂等/事务回滚、共享撤权后 owner 资源保留、原生与标准 head 变化拒绝覆盖共 4 个场景已完成验证；首批 3 通过/1 表示问题，修复后仅补跑失败项通过。共享包 0.3.0 / 在线协议 1.1.0，作者 0.1.0 摘要不变。新增 submit、validate、commit、revision 和 publish_native 工具；只有经共享契约验证的持久 COMMITTED 回执算正式成功。见[接口、证据与限制](https://github.com/bambom/GameMagicTool/blob/800abb6c037b4d90dcc80cac0e8495b12135aa23/docs/ui-design/PUBLICATION-INTEGRATION.md)及[插件操作链](ui-design-online.md)。有限合并、字节范围续传、完整标准生命周期及目标导出继续实施；未部署，停止独立基线推进。
 
 2026-10-12 最新桥接进展：平台提交 [`880ef1e32c`](https://github.com/bambom/GameMagicTool/commit/880ef1e32c5983e45bf5f037aecb59158d6cb896) 已完成真实文件到原生编辑器、保存/撤销/重做/重开及标准回写闭环。完整样例 8 文件、28 个布局条目、3 个真实图片绑定和 1 个字体绑定通过；中文标题编辑后固定框仍为 180×32，组件/实例/状态/扩展保持，实际标准预览接口返回 640×480 PNG。私有 ESM 源码覆盖层保持原生排版事务，原上游源码不变。隔离桥接集成、4 项投影、4 项原生预览及 2 项适配检查通过，临时数据库已移除。见[桥接记录与限制](https://github.com/bambom/GameMagicTool/blob/880ef1e32c5983e45bf5f037aecb59158d6cb896/docs/ui-design/BRIDGE-INTEGRATION.md)。正式原生导入接口、完整依赖冻结、标准修订与持久回执继续实施；不能把本批准备或原生 ACK 报告为正式提交。

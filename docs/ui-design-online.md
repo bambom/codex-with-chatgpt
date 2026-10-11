@@ -6,7 +6,7 @@
 
 在平台 `/ui-design/connect` 为有权编辑的设计建立 `design.read` / `design.submit` 连接，使用一次性配对码在本地运行 `c2c ui-design connect --server <平台地址> --pairing-code <配对码> -w <工作区>`。端点只由本地配置决定；MCP 参数不能重定向凭据。Windows 凭据使用当前用户 DPAPI，模型只得到连接范围和过期时间。
 
-1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.3.0、在线协议 1.1.0；作者格式仍为 0.1.0。
+1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.4.0、在线协议 1.2.0；作者格式仍为 0.1.0。
 2. `ui_design_context` 获取当前原生序号/hash 和标准修订，再用 `ui_design_checkpoint` 固定准确状态。
 3. `ui_design_submission_begin` 绑定 checkpoint、base revision 与稳定 request UUID，返回 submission ID。为完整文件清单写入这个 ID，保持正文/清单/文件摘要一致。
 4. 在工作区完成原图、采用定稿、PNG 素材、实际字体、完整预览、总览与来源记录。`ui_design_precheck` 可检查本地结构和字节，不能替代平台验证或发布。
@@ -19,7 +19,9 @@
 
 成功结果必须是共享协议校验通过的持久 `COMMITTED` 回执，包含准确正文/清单摘要、标准修订、原生 checkpoint 与重建图。`BUNDLE_STORED`、本地预检和验证 PASS 都不代表正式保存。使用 `ui_design_submission_status` 恢复未知结果；重复相同 submission/validation 身份返回原回执，不产生第二次导入。取消只允许未提交候选，并保留已经接收的文件。
 
-当前断点恢复粒度是完整文件，单文件上限 64 MiB、整包 256 MiB、最多 2048 项；尚不支持字节范围补传。发生版本冲突时读取新 context，保留原候选与原生草稿，不能自动换基线并声称旧候选仍已验证。
+当前断点恢复粒度为固定 1 MiB 块（末块可短），进度来自服务端 nextOffset；重复块必须同偏移、长度和摘要。单文件上限 64 MiB、整包 256 MiB、最多 2048 项；接收中数据每 actor 256 MiB、全局 768 MiB，首块起七天过期后需新建 submission。完成和取消会释放接收中的块字节。发生版本冲突时读取新 context，保留原候选与原生草稿，不能自动换基线并声称旧候选仍已验证。
+
+错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1 正式回执仍能通过固定旧协议读取。
 
 ## 原生编辑后的再次发布
 
