@@ -6,7 +6,7 @@
 
 在平台 `/ui-design/connect` 为有权编辑的设计建立 `design.read` / `design.submit` 连接，使用一次性配对码在本地运行 `c2c ui-design connect --server <平台地址> --pairing-code <配对码> -w <工作区>`。端点只由本地配置决定；MCP 参数不能重定向凭据。Windows 凭据使用当前用户 DPAPI，模型只得到连接范围和过期时间。
 
-1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.6.0、在线协议 1.4.0；作者格式仍为 0.1.0。
+1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.7.0、在线协议 1.5.0；作者格式仍为 0.1.0。
 2. `ui_design_context` 获取当前原生序号/hash 和标准修订，再用 `ui_design_checkpoint` 固定准确状态。
 3. `ui_design_submission_begin` 绑定 checkpoint、base revision 与稳定 request UUID，返回 submission ID。为完整文件清单写入这个 ID，保持正文/清单/文件摘要一致。
 4. 在工作区完成原图、采用定稿、PNG 素材、实际字体、完整预览、总览与来源记录。`ui_design_precheck` 可检查本地结构和字节，不能替代平台验证或发布。
@@ -23,7 +23,7 @@
 
 当前断点恢复粒度为固定 1 MiB 块（末块可短），进度来自服务端 nextOffset；重复块必须同偏移、长度和摘要。单文件上限 64 MiB、整包 256 MiB、最多 2048 项；接收中数据每 actor 256 MiB、全局 768 MiB，首块起七天过期后需新建 submission。完成和取消会释放接收中的块字节。发生版本冲突时读取新 context，保留原候选与原生草稿，不能自动换基线并声称旧候选仍已验证。
 
-错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；合并冲突还尽量提供稳定 nodeId/assetId，按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1/1.2/1.3 正式回执仍能通过固定旧协议读取。
+错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；合并冲突还尽量提供稳定 nodeId/assetId，按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需使用新的 submission。先用 `ui_design_submission_read` 核验保留正文、清单和最近 32 条诊断；读取当前 context/checkpoint 后，用 `ui_design_repair_begin` 显式绑定新基线和稳定 request UUID。平台在同一事务中创建新尝试并取消旧未提交尝试，保留旧报告和诊断。修正版清单写入新 ID；完全相同的已接收文件描述按固定版本复用，其他文件正常上传。修正版的验证与准备从头执行，旧报告不能用于新内容。COMMITTED 尝试不能修复。候选读取的 20 MiB 响应上限用于容纳正文及诊断，其余 JSON 读取仍为 8 MiB。旧 1.1/1.2/1.3/1.4 正式回执仍能通过固定旧协议读取。
 
 ## 原生编辑后的再次发布
 
@@ -43,4 +43,4 @@
 
 真实插件完整提交、原界面中文修改/Undo/Redo、再次发布和重开已验证。报告仍明确 `candidateNativeEditorRun=false`、`visualReview=NOT_REVIEWED`、`targetExport=NOT_EVALUATED`；该系统场景不代表每个候选都运行过原生窗口，也不代表人工视觉审核或 PSD/FGUI 导出成功。生产者图片与重建图的差异是可查的测量和警告。
 
-当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史复制、改名、移动、回收/还原及永久业务移除已经验证；定位修复闭环和平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。
+当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史复制、改名、移动、回收/还原及永久业务移除已经验证；定位修复闭环已通过跨进程真实插件验证；平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。

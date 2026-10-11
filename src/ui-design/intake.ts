@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { assertDocument, parseStrict, hashDocument, hashBytes, validateManifest, type AssetManifest } from "@magicgamestudio/ui-design-contract";
 import { SPEC_DIGEST } from "@magicgamestudio/ui-design-contract/spec";
-import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, assertOnlinePreparation, assertOnlineError, isOnlineProtocolIdentity, type OnlineReceipt, type OnlinePreparation } from "@magicgamestudio/ui-design-contract/online";
+import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, assertOnlinePreparation, assertOnlineError, assertOnlineRepair, isOnlineProtocolIdentity, type OnlineReceipt, type OnlinePreparation } from "@magicgamestudio/ui-design-contract/online";
 import type { Workspace } from "../workspace/manager.js";
 import { UiWorkflowError, safeRelative } from "../ui/storage.js";
 import { readBounded } from "./precheck.js";
@@ -15,6 +15,7 @@ const statusSchema = z.object({
   files: z.array(z.object({ index: z.number().int().nonnegative(), path: z.string(), role: z.string(), sha256: sha, byteLength: z.number().int().positive(), stored: z.boolean(),
     nextOffset: z.number().int().nonnegative(), uploadState: z.enum(["DECLARED", "RECEIVING", "READY", "EXPIRED"]), uploadExpiresAt: z.string().datetime({ offset: true }).nullable() })).max(ONLINE_LIMITS.files),
   nativeImported: z.boolean(), published: z.boolean(), submitted: z.boolean(), validation: z.unknown().nullable(), receipt: z.unknown().nullable(), lastError: z.unknown().nullable(), preparation: z.unknown().nullable(),
+  repair: z.unknown().optional(),
 });
 function fail(code: string, message: string): never { throw new UiWorkflowError(code, message); }
 function status(value: unknown, design: string, submission?: string) {
@@ -30,7 +31,9 @@ function status(value: unknown, design: string, submission?: string) {
   const receipt = row.receipt == null ? null : checkedReceipt(row.receipt, design, row.submissionId);
   const preparation = row.preparation == null ? null : checkedPreparation(row.preparation, design, row.submissionId);
   let lastError = null;
+  let repair = null;
   try {
+    if (row.repair != null) repair = assertOnlineRepair(row.repair, design, row.submissionId);
     if (row.lastError != null) {
       lastError = assertOnlineError(row.lastError);
       if (lastError.query?.designId !== design || lastError.query.submissionId !== row.submissionId) throw new Error();
@@ -44,7 +47,8 @@ function status(value: unknown, design: string, submission?: string) {
     || receipt && (receipt.origin !== "PLUGIN_CANDIDATE" || receipt.submittedDocumentHash !== row.documentHash || receipt.submittedAssetManifestHash !== row.assetManifestHash
       || receipt.baseRevision !== row.baseRevision || (receipt.candidateValidationId ?? receipt.validationId) !== validation?.validationId))
     return fail("PLATFORM_RESPONSE_INVALID", "Platform publication status is inconsistent.");
-  return { ...row, validation, receipt, lastError, preparation };
+  if (repair && repair.reusedFileCount > row.files.filter(f => f.stored).length) return fail("PLATFORM_RESPONSE_INVALID", "Repair reuse exceeds retained files.");
+  return { ...row, validation, receipt, lastError, preparation, repair };
 }
 function checkedValidation(value: unknown, design: string, submission: string) {
   try { const report = assertOnlineValidation(value); if (report.designId !== design || report.submissionId !== submission) throw new Error(); return report; }
@@ -69,6 +73,37 @@ export async function beginIntake(workspace: Workspace, design: string, requestI
 }
 export async function intakeStatus(workspace: Workspace, design: string, submission: string) {
   return status(await platformIntakeRequest(workspace, design, "/submissions/" + submission, "GET"), design, submission);
+}
+export async function readIntakeCandidate(workspace: Workspace, design: string, submission: string) {
+  const raw = z.object({ status: z.unknown(), document: z.unknown().nullable(), manifest: z.unknown().nullable(), errors: z.array(z.unknown()).max(32) })
+    .parse(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/candidate", "GET"));
+  const current = status(raw.status, design, submission);
+  try {
+    const document = raw.document === null ? null : assertDocument(raw.document);
+    const manifest = raw.manifest as AssetManifest | null;
+    if ((document === null) !== (current.documentHash === null) || (manifest === null) !== (document === null)
+      || document && (document.designId !== design || hashDocument(document) !== current.documentHash
+        || !validateManifest(document, manifest!, { submissionId: submission, baseRevision: current.baseRevision, specDigest: SPEC_DIGEST }).valid
+        || hashDocument(manifest!) !== current.assetManifestHash)) throw new Error();
+    const errors = raw.errors.map(value => {
+      const error = assertOnlineError(value);
+      if (error.query?.designId !== design || error.query.submissionId !== submission) throw new Error();
+      return error;
+    });
+    return { status: current, document, manifest, errors, contentTrust: "UNTRUSTED_DATA" };
+  } catch { return fail("PLATFORM_RESPONSE_INVALID", "Retained candidate or diagnostics failed their identity and content checks."); }
+}
+export async function beginIntakeRepair(workspace: Workspace, design: string, source: string, requestId: string, checkpointId: string, baseRevision: number) {
+  z.string().uuid().parse(requestId); z.string().uuid().parse(checkpointId); z.number().int().min(0).max(1e9).parse(baseRevision);
+  await platformSpecification(workspace); await platformOnlineProtocol(workspace);
+  const parent = await intakeStatus(workspace, design, source);
+  if (parent.state === "COMMITTED") return fail("SUBMISSION_ALREADY_COMMITTED", "A committed receipt cannot be repaired; start a new change from the current context.");
+  const row = status(await platformIntakeRequest(workspace, design, "/submissions/" + source + "/repair", "POST",
+    { requestId, checkpointId, baseRevision, specDigest: SPEC_DIGEST, onlineDigest: ONLINE_DIGEST }), design);
+  if (row.submissionId === source || row.checkpointId !== checkpointId || row.baseRevision !== baseRevision
+    || row.repair?.sourceSubmissionId !== source || row.repair.sourceDocumentHash !== parent.documentHash
+    || row.repair.sourceAssetManifestHash !== parent.assetManifestHash) return fail("PLATFORM_RESPONSE_INVALID", "Repair did not bind the previous attempt and requested base.");
+  return row;
 }
 export async function cancelIntake(workspace: Workspace, design: string, submission: string) {
   return status(await platformIntakeRequest(workspace, design, "/submissions/" + submission, "DELETE"), design, submission);

@@ -92,7 +92,9 @@ async function request(server: string, route: string, method = "GET", body?: unk
   if (!response.headers.get("content-type")?.toLowerCase().includes("application/json")) {
     await response.body?.cancel(); return fail("PLATFORM_RESPONSE_INVALID", "Expected a platform JSON response.");
   }
-  return boundedJson(response, MAX_RESPONSE);
+  // A retained candidate adds status and up to 32 bounded diagnostics to the original 8 MiB input.
+  const candidateRead = method === "GET" && /^\/designs\/D[A-Za-z0-9_-]{10}\/submissions\/S[a-f0-9]{32}\/candidate$/.test(route);
+  return boundedJson(response, candidateRead ? 20 * 1024 * 1024 : MAX_RESPONSE);
 }
 async function boundedJson(response: Response, maximum: number): Promise<unknown> {
   const reader = response.body?.getReader(); if (!reader) return fail("PLATFORM_RESPONSE_INVALID", "Platform response is empty.");
@@ -194,7 +196,7 @@ export async function platformOnlineProtocol(workspace: Workspace) {
 
 /** Internal fixed-design transport; credentials and endpoint selection never become tool arguments. */
 export async function platformIntakeRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown) {
-  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/prepare-commit|\/preparations\/[a-f0-9-]{36}|\/files\/[0-9]{1,4}(?:\/chunks\/[0-9]{1,9}|\/complete)?)?)?$/.test(suffix)
+  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/repair|\/validate|\/commit|\/prepare-commit|\/preparations\/[a-f0-9-]{36}|\/files\/[0-9]{1,4}(?:\/chunks\/[0-9]{1,9}|\/complete)?)?)?$/.test(suffix)
     && !/^\/revisions\/[1-9][0-9]{0,9}(?:\/copy-source)?$/.test(suffix)
     && !/^\/revisions\?before=[0-9]{1,10}&limit=[0-9]{1,3}$/.test(suffix) && suffix !== "/publications")
     return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");

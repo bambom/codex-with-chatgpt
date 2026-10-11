@@ -18,6 +18,7 @@ it("preserves bounded actionable diagnostics and refuses unrelated or malformed 
     for await(const _ of req){}res.setHeader("Content-Type","application/json");
     if(req.url?.endsWith("/exchange")){res.end(JSON.stringify({connectionId:uuid,accessToken:"uid_"+"a".repeat(43),tokenType:"Bearer",expiresAt:new Date(Date.now()+3600000).toISOString(),designIds:[design],scopes:["design.read","design.submit"]}));return;}
     if(req.url?.endsWith("/current")){res.statusCode=204;res.end();return;}
+    if(mode==="candidate-large"){res.end(JSON.stringify({padding:"x".repeat(8*1024*1024)}));return;}
     res.statusCode=400;
     res.end(JSON.stringify(mode==="good"?error:mode==="wrong-status"?{...error,httpStatus:409}:mode==="large"?{...error,issues:[{...error.issues[0],rule:"x".repeat(300000)}]}:
       {...error,query:{designId:"D0000000000",submissionId:sub,statusPath:"/ui-design/api/v1/designs/D0000000000/submissions/"+sub}}));
@@ -28,6 +29,9 @@ it("preserves bounded actionable diagnostics and refuses unrelated or malformed 
     const call=()=>platformIntakeRequest(workspace,design,"/submissions/"+sub+"/candidate","PUT",{});
     await expect(call()).rejects.toMatchObject({code:error.code,details:error});
     for(mode of ["wrong-status","wrong-design","large"])await expect(call()).rejects.toMatchObject({code:"PLATFORM_HTTP_400"});
+    mode="candidate-large";
+    expect((await platformIntakeRequest(workspace,design,"/submissions/"+sub+"/candidate","GET") as {padding:string}).padding.length).toBe(8*1024*1024);
+    await expect(platformIntakeRequest(workspace,design,"/submissions/"+sub,"GET")).rejects.toMatchObject({code:"PLATFORM_RESPONSE_LIMIT"});
     await disconnectPlatform(workspace);
   }finally{server.close();await once(server,"close");if(prior===undefined)delete process.env.C2C_STATE_DIR;else process.env.C2C_STATE_DIR=prior;await fs.rm(root,{recursive:true,force:true});}
 },60000);
