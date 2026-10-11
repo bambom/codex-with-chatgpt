@@ -1,6 +1,8 @@
 # UI 设计平台：复制式二次开发交接
 
-更新：2026-10-11。当前任务是先完善详细调研、客户端与服务器计划及架构。**原代码保持不动；复制 AI 图层编辑器及服务端可用实现，形成新系统后再二次开发。** 以当前完整 AI 图层编辑器的源码、客户端功能和业务逻辑作为整体开发基线，默认继承原全部可用功能并增量实现新需求。图层、选择、编辑、通信、保存等只是例子，不是从原产品挑出的有限保留范围。
+2026-10-11 实施进展：平台提交 [`2186e79f1f`](https://github.com/bambom/GameMagicTool/commit/2186e79f1fb76b481017261cff8d2b7d90a803f5) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，在临时 PostgreSQL 和真实 Electron 中验证文本插入、修改、撤销、重做、逐事务保存确认和重开。143 个继承 REST 控制器全部保留私有映射；34 项单元检查、6 项完整宿主装配检查通过。七个原侧栏入口已观察，但部分面板仍有缺失资源或服务错误；固定 editor runtime 的完整字面依赖对照发现原采集包遗漏 3,569 个资源，正在显式补采。**B2 完整原功能、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/2186e79f1fb76b481017261cff8d2b7d90a803f5/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
+
+更新：2026-10-11。当前已按详细调研、客户端与服务器计划进入副本实施。**原代码保持不动；复制 AI 图层编辑器及服务端可用实现，形成新系统后再二次开发。** 以当前完整 AI 图层编辑器的源码、客户端功能和业务逻辑作为整体开发基线，默认继承原全部可用功能并增量实现新需求。图层、选择、编辑、通信、保存等只是例子，不是从原产品挑出的有限保留范围。
 
 调研后用户已授权开始实施。平台提交 [`b640cf7a00`](https://github.com/bambom/GameMagicTool/commit/b640cf7a0062def34d056674a66a37fc192e65cf) 固定 16,857 个客户端构建输入和 766 个服务端来源文件，并完成独立完整构建：23 个 profile 保留，22 个入口脚本、1 个 Worker 静态绑定及 457 个宿主文件哈希检查通过。构建使用经源码/编译器/输出校验的缓存，不是冷构建；10 条上游待恢复记录仍在。详细证据与余项见 [源码与构建基线](https://github.com/bambom/GameMagicTool/blob/b640cf7a0062def34d056674a66a37fc192e65cf/docs/ui-design/SOURCE-COPY-BASELINE.md)。完整功能运行对照、私有后端、真实界面和保存重开尚未通过。已有 P0-A 契约、插件离线工具与实验会话的[历史记录](https://github.com/bambom/codex-with-chatgpt/blob/3bf17f57768f1450ace7bea5a90553e0a36171b1/docs/ui-design-contract-progress.zh-CN.md)不证明副本功能已通过。自制预览被用户指出不符，不作为产品基础。
 
@@ -50,7 +52,7 @@ GPT 仍完成整稿设计、拆分补全、RGBA、真文本、语义/组件/布�
 
 拟在 `uidesign/nativecompat/{web,protocol,stream,media,magiclayer,design}` 复制必要实现，包含内部 helper、entity/repository、直接 SQL、锁、序号、回执、checkpoint、资产引用、恢复和生命周期。所有 Bean/entity 名、路由、表、缓存、目录及后台扫描改为本产品绑定；不能只复制 Controller。
 
-产品原生通道使用拟定的 `/_ui-design/native/_ajax/...` 与 `/_ui-design/native/_stream`，标准/GPT 使用 `/api/ui-design/v1/...`；实际原 codec、错误、重试、WS 帧和回执机制保留。未映射写请求明确失败，不回落旧接口。新认证链显式接入真实用户及范围凭据并检查 Origin/CSRF/设计角色，不假设原中间件自动覆盖。
+产品原生通道当前实现为 `/ui-design/_ajax/...` 与 `/ui-design/_stream`，标准/GPT 使用 `/api/ui-design/v1/...`；实际原 codec、错误、重试、WS 帧和回执机制保留。未映射写请求明确失败，不回落旧接口。新认证链显式接入真实用户及范围凭据并检查 Origin/CSRF/设计角色，不假设原中间件自动覆盖。
 
 原生 baseline/delta/client/receipt/offline/checkpoint 与设计/ACL 复制为 `ui_design_*` 产品数据；公共用户、团队、项目、asset/blob/version/quota/backend 继续单一事实源。新主页装配合并新旧摘要，以 `(kind, record UUID)` 分派。新关联项目必须核验真实成员和项目权限。
 
