@@ -1,0 +1,663 @@
+{
+  "format": "ui-design-static-source-audit-1",
+  "observedAt": "2026-10-11T07:59:38.305179+00:00",
+  "sourceWorkspace": "E:\\Workspace\\Project-Revert\\MagicGameStudio",
+  "sourceBranch": "codex/replay-storage-fixes-20260918",
+  "sourceHead": "78aef8f75f6ccf092a1d4f05184595dd05e9dc8f",
+  "scope": "Read-only planning audit. No original source, running application, database or release pointer changed. Not a complete dependency closure and not live UI acceptance.",
+  "selectedGitStatus": [
+    "M MagicGameClient/src/business/development/modules.json",
+    " M MagicGameClient/tools/client-build/runtime.mjs",
+    " M MagicGameClient/tools/launch-client.mjs",
+    " M Server/docs/SERVER_CODE_MAP.md"
+  ],
+  "client": {
+    "esmCore": {
+      "registeredFiles": 243,
+      "units": 14650
+    },
+    "sharedHost": {
+      "definitionFiles": 230,
+      "orderedUnits": 17883
+    },
+    "businessUnits": 452,
+    "clientPrograms": {
+      "records": 15261,
+      "contracts": 43,
+      "admission": {
+        "ready": 15251,
+        "blocked": 10
+      },
+      "recoveryStatus": {
+        "ready": 13279,
+        "failed": 32,
+        "maintained-typescript-repaired": 5,
+        "verified-active-source": 1945
+      }
+    },
+    "blockedPrograms": [
+      {
+        "tsFile": "src/client-programs/editor/lazy/131ab813c7bc0b06.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/15ae3da149be1713.vendor.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/84f1ec1fc3a97ca3.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/a312dfaed001d9ae.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/3216e1c389370b7f.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/9ef76dd504d7d11e.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/0bb6499396896c8f.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/186f9bbf3421813d.vendor.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/43dd98238dbb91ea.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/a84728ca50460d9e.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/0ab3b84eb3f8cbaf.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/305407a53d8625c2.vendor.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/ed5dbacf1d042dd4.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/ebf4b5f46604984a.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/4c1b3fbf6fbaead7.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/05891a47d3edd855.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/a03b3be53846b39f.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/63035c58580ecb3d.js"
+        ]
+      },
+      {
+        "tsFile": "src/client-programs/editor/lazy/92e66ee4ada96c1f.ts",
+        "context": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3",
+        "bindings": [
+          "https://static.canva.com/web/fa231add99fb0232.js"
+        ]
+      }
+    ],
+    "releasePointer": {
+      "format": "client-current-1",
+      "release": "dist/client-releases/48b3c67b-feb1-4157-adae-fe42d65c2a5d",
+      "manifestSha256": "46574cd5cfae9c9f522587e3dfbec10a2c281bbecbbfe006084cf48fd2dcc629"
+    },
+    "releaseManifest": {
+      "format": "client-release-1",
+      "catalog": "catalog.json",
+      "catalogSha256": "909f0dfb228c027d53a5d43365ea49de75ec8bc457d051e88b9c38b2a31f4dd7",
+      "compatFingerprint": "6942baf7e6689297b284c20225982693bcb568fdc6341db07f1b3cc839bdba8e",
+      "runtimeSha256": "cd64239a74629e1c68dfbdb74f960778eb2c25bff7aa163bcd1cdf07eee9e2a5",
+      "buildInputSha256": "af5a63f48d9d1f9fbb41077e97d5f1e8d8485227912db464087ea8ec82df73eb"
+    },
+    "releaseStats": {
+      "assets": 90551,
+      "maps": 15256,
+      "manualRestored": 2,
+      "sourcePrograms": {
+        "enabled": true,
+        "total": 13316,
+        "ready": 13279,
+        "failed": 37,
+        "unbuilt": 0,
+        "available": 13279,
+        "substituted": 13266,
+        "skippedDeclared": 13,
+        "skippedAlreadySupplied": 0,
+        "productionAdmitted": false
+      },
+      "businessUnits": 450,
+      "businessSubstituted": 6,
+      "ownedPrograms": 15251,
+      "ownedBindings": 15251,
+      "sharedPackages": 3,
+      "sharedModules": 700,
+      "sharedBindings": 3,
+      "pendingRecovery": 10,
+      "entryDocuments": {
+        "scripts": 20,
+        "documents": 2
+      },
+      "reused": 103816,
+      "copied": 0
+    },
+    "activeStartupEditorProfiles": [
+      {
+        "id": "editor-web-60b6a02176d15b653240101b5cdc557b39547e91",
+        "buildId": "60b6a02176d15b653240101b5cdc557b39547e91",
+        "stylesheetDeclarations": 259,
+        "startupScripts": 7
+      }
+    ],
+    "verifiedAssets": [
+      {
+        "url": "https://static.canva.com/web/cc83af1dcced1993.js",
+        "artifact": "assets/ed6dd7dec70111df9b6a6ab8c8c47209e8a2f0f7808566c798cf4390097919ca.js",
+        "outputSha256": "ed6dd7dec70111df9b6a6ab8c8c47209e8a2f0f7808566c798cf4390097919ca",
+        "sourceOwnership": "maintained-typescript",
+        "sourcePackage": null,
+        "sourceProgram": {
+          "key": "editor-web-7949767c8cf86dec79fb1fdf14fd84e00f8657f3/35cebe4e3e65eb87588f4fce408f7f17681d8a990db74033f6536bed60ba7770",
+          "tsFile": "src/client-programs/editor/lazy/35cebe4e3e65eb87.ts",
+          "tsSha256": "a5c4048436719a4615cad77f6962ea94fac8f2138f2c02258984f5bca3f5eee3",
+          "sourceSha256": "35cebe4e3e65eb87588f4fce408f7f17681d8a990db74033f6536bed60ba7770",
+          "outputSha256": "ed6dd7dec70111df9b6a6ab8c8c47209e8a2f0f7808566c798cf4390097919ca"
+        },
+        "developmentUnitsCount": 0
+      },
+      {
+        "url": "https://static.canva.com/web/84ccfad1a68789bd.js",
+        "artifact": "assets/c3c6c7ef519d7a55a91a9969ab9872272c25ca53f9ac6491db53b2d6b3fbe37b.js",
+        "outputSha256": "c3c6c7ef519d7a55a91a9969ab9872272c25ca53f9ac6491db53b2d6b3fbe37b",
+        "sourceOwnership": "maintained-javascript",
+        "sourcePackage": {
+          "id": "editor-core-current-0cdd",
+          "directory": "src/shared-runtime/editor-core-current-0cdd-esm",
+          "inputSha256": "35713409554c122f7b2768781ce316e2f3199f9d9d597811f3ce0c5f876524fa",
+          "sourceSha256": "0cdd93e36c21c3b33e1549075eee56eb5b1f1ab2fa33c4ff340870a53c5a3b84",
+          "modules": 240,
+          "units": 14650,
+          "moduleFormat": "esm"
+        },
+        "sourceProgram": null,
+        "developmentUnitsCount": 438
+      },
+      {
+        "url": "https://static.canva.com/web/7f57051f929f6dcb.js",
+        "artifact": "assets/e1701347a61d447a40e0afa9bf0197d165a4974f4ab5bb9417c89c8480c4fb20.js",
+        "outputSha256": "e1701347a61d447a40e0afa9bf0197d165a4974f4ab5bb9417c89c8480c4fb20",
+        "sourceOwnership": "maintained-javascript",
+        "sourcePackage": {
+          "id": "editor-current-b29e",
+          "directory": "src/shared-runtime/editor-current-b29e",
+          "inputSha256": "780c4544084a589509511ec52e1f4e8d9416b583079f1fdb5e4e265e8f6d64e7",
+          "sourceSha256": "b29ed58e5103461a4e4a5bc9d43849a70f57ec02837c7f075605a81c17cca60f",
+          "modules": 230,
+          "units": 17883
+        },
+        "sourceProgram": null,
+        "developmentUnitsCount": 0
+      }
+    ],
+    "staleDistClient": {
+      "pendingRecovery": 29,
+      "businessUnits": 6,
+      "isCurrentPointer": false
+    },
+    "layerPanelCandidate": {
+      "path": "src/client-programs/editor/lazy/35cebe4e3e65eb87.ts",
+      "signals": [
+        "editor_layers_panel_shown",
+        "layers_panel",
+        "position_panel"
+      ],
+      "publishedInCurrentCatalog": true,
+      "loadedByCurrentOpenWindow": "NOT_VERIFIED",
+      "exactStylesheetAndFullInteractionMapping": "PENDING"
+    }
+  },
+  "files": [
+    {
+      "path": "MagicGameClient/src/shared-runtime/README.md",
+      "bytes": 7064,
+      "workingTreeSha256": "01fd9b46d37403f56d7a440cc7a7a2872a4fb374b8c082b6e52f2388a1aa8898",
+      "indexBlob": "720a43801507eddce81e13402d7b31cfc31bcacd",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/packages.json",
+      "bytes": 931,
+      "workingTreeSha256": "481352fef7e201da773cf3535b12ec42f75462171dfcc8a34e4279a24610e59d",
+      "indexBlob": "6bbb1ac09ff2eaad7d19fd4198da2080294e5213",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/editor-core-current-0cdd-esm/README.md",
+      "bytes": 8665,
+      "workingTreeSha256": "97b0b7009e0b153e2d1eb3ad3593eb4e2a99055fb9fa157e335a20bd9cd8b233",
+      "indexBlob": "3f294fd66497bf9b385e0fb61ff67d98f33772a3",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/editor-core-current-0cdd-esm/modules.json",
+      "bytes": 13444,
+      "workingTreeSha256": "a242e6a0ccfd0103d0f888f5e8491e6d4ff7fc8b3a7c7ba18b750aa7f767ec99",
+      "indexBlob": "2394759049bcdd57bd9fc0b9fea55559b0e20544",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/editor-core-current-0cdd-esm/runtime-ports.js",
+      "bytes": 255,
+      "workingTreeSha256": "69ec3fc983029a55c8c67283c68ffd22dab51b44a842097060c9d245a74f3663",
+      "indexBlob": "d85d90074fa56df099af2ffe666ea2f42b4171a1",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/editor-current-b29e/modules.json",
+      "bytes": 261739,
+      "workingTreeSha256": "51c6b25047161a40162bf3a455d93b27c9e8f43d7f0dcca28234c31c84c4f114",
+      "indexBlob": "0d6a127b54ffb91b0df3d64d974da79165368102",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/shared-runtime/editor-current-b29e/protocol/runtime/Do-u00157.js",
+      "bytes": 36385,
+      "workingTreeSha256": "ff6c629e3fc0e1f165be7d4d7bc14f4a99e072929d5c7ddfc1f0bbb3b22598b6",
+      "indexBlob": null,
+      "gitTracked": false,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/modules.json",
+      "bytes": 156570,
+      "workingTreeSha256": "0c9f74b05a1fd155e2245f4e48eb5455bf4675dd63059f0d3920cb94d540c613",
+      "indexBlob": "0a51c33f631e0720349b4039c8d7174efffef801",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/home-magic-layers/factory.ts",
+      "bytes": 3898,
+      "workingTreeSha256": "1daf37d954649d00f4754e136162ee7bd6e4578b3898402ea0e68e3551483174",
+      "indexBlob": "233c5fe6559912d169596ad1fa9eb39a9fc2e37a",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/home-magic-layers/controller.ts",
+      "bytes": 3546,
+      "workingTreeSha256": "c4482fde7cf82ef0afdde4adb37072b84dc7c396a24904986f7039156a6f1ba7",
+      "indexBlob": "3e1e58967a6ee0f3062e732e9ac9ce6f642d2e87",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/README.md",
+      "bytes": 6976,
+      "workingTreeSha256": "c43defeff5250cd4f7a833b377e9ce9f03e4c99b16de8203919cde6affb46db7",
+      "indexBlob": "cbd00a1e48d53c3802321f43f104168b62497020",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/factory.ts",
+      "bytes": 7622,
+      "workingTreeSha256": "98d9464579ef22145f4dff6b8a3fd6be92bb8e0f88a538cdf4e062d8b58aa60e",
+      "indexBlob": "c2d29c4412ddb5c9b8cca369506ecb08b1250b50",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/editor-transaction.ts",
+      "bytes": 3001,
+      "workingTreeSha256": "2cfb49d2ad289bc994930dbb3e79f79c48ec09a20489034d0e3a2bd2bfbd90c3",
+      "indexBlob": "f88a721acdb773815b421655b6be6aece0ac7e20",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/insert-native-layers.ts",
+      "bytes": 2792,
+      "workingTreeSha256": "77fddde3af9c1a10e3cad83af5850054f426ed8220fac5b5770c9c360bdfcc35",
+      "indexBlob": "20f4905fc0365091dc721074e291f294ce1216e8",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/present-layers.ts",
+      "bytes": 2679,
+      "workingTreeSha256": "b39e67801e6fe10a3001046aa1417baeacf7526e2f03b9d8a43b4dfcb9734ede",
+      "indexBlob": "a24ae34c9a08993d2fb1a76c62fffc6aef5f4fe5",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/selection/element-selection.ts",
+      "bytes": 1880,
+      "workingTreeSha256": "a84538b94dd0e5f456a3f5a3ef145572192ad850be88f33bbe105643b6eef59b",
+      "indexBlob": "8ec523722fd7e5a6564e6bf10443955cb92ad806",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/selection/page-selection.ts",
+      "bytes": 2030,
+      "workingTreeSha256": "42a793468057bd54394617f01fb78031f0b4cbffc8532505754beed9fd649229",
+      "indexBlob": "c769b96032306e9599cf1c122cdfabf1b938d69c",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/workflow/insert-native-layers.ts",
+      "bytes": 2585,
+      "workingTreeSha256": "97539da3b1213a4b628d7a157e926cd471f2c132b0227fa80ff454e7ebe39698",
+      "indexBlob": "5a841c075c37f8f94810a19a96a9f136912bad0e",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/ai-layer-tasks/workflow/present-layers.ts",
+      "bytes": 2404,
+      "workingTreeSha256": "3e66c5e0fa11ddc7e97d2ec9d6b996255a1877d738b53159f466518e7c459f45",
+      "indexBlob": "e4ab004d91a580c8028a0a49127d9444db4628dd",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/business/development/editor-page-views/implementation/page-view-factory.ts",
+      "bytes": 13935,
+      "workingTreeSha256": "a594c434efca68857f8e43f9f06db6de242cb8975a2802bae9ac577ae9e9a25c",
+      "indexBlob": "074ce0112c1a6df1573b93096c6201faa46db381",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/client-programs/README.md",
+      "bytes": 1343,
+      "workingTreeSha256": "dfb8216f17f94c4c25e14ae6db7a479e7bb4cece968ed3736546f812a946356a",
+      "indexBlob": "cc13397f9013613572bda4460b80c7a0149398c3",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/client-programs/manifest.json",
+      "bytes": 24021939,
+      "workingTreeSha256": "bec966c5ba070914b33bf6e8ddf9ed0423c5c259f309a76afea2244f93c60e0f",
+      "indexBlob": "832dc56d131df741c10ef5425aec39e128ab53c3",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/client-programs/editor/lazy/35cebe4e3e65eb87.ts",
+      "bytes": 10921506,
+      "workingTreeSha256": "a5c4048436719a4615cad77f6962ea94fac8f2138f2c02258984f5bca3f5eee3",
+      "indexBlob": "74a388b598c9e9924157a130dab03d2cdd999d29",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/reconstructed/README.md",
+      "bytes": 8394,
+      "workingTreeSha256": "5a522857ed52bd81b40a6a029e27776d11d2602abe463ba4d46edef546fa5981",
+      "indexBlob": "30ba52767b2c9cc9c6890450a9291560bf38ffce",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/app/source-runtime/editor-document.ts",
+      "bytes": 5759,
+      "workingTreeSha256": "4ab8cb57e122eca4ebca1f8cd301e337d781a03fab4bae5547a0c507858a6522",
+      "indexBlob": "06a7ddb5bf5360f88a50ab67034a69bac5a63471",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/src/app/source-runtime/editor/session.ts",
+      "bytes": 7091,
+      "workingTreeSha256": "a5ae9dcfe76be19fcb928df7f6aba0fb3caa961d9ccf7ba3b7095b54904bbfd5",
+      "indexBlob": "c69898d9a776740722571075b7ba3bf0d0936a67",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/client-build/build.mjs",
+      "bytes": 10181,
+      "workingTreeSha256": "567e65839f4d581c19cc2cec4499a0a7d6f4b2214d188ebbc7d83e935d1b68f3",
+      "indexBlob": "f365363eb39294911623ddcd6829b02337e7d4a3",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/client-build/programs.mjs",
+      "bytes": 19485,
+      "workingTreeSha256": "fb642f0f82e0fce67176a63187719be8aaec95c0fce2a17713189cba654fe0fe",
+      "indexBlob": "b31e4339d07636c9c3cd6b0496c8c9ad66607455",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/client-build/entry-documents.mjs",
+      "bytes": 6601,
+      "workingTreeSha256": "6bde254c86d4a4ebd6ed1ab815f7a75c2d2e80cef21285c4e0dff47fcc5e0646",
+      "indexBlob": "36e1e9eabe64630089d07a61bcdf5c68a8e95ff5",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/client-build/publication.mjs",
+      "bytes": 5088,
+      "workingTreeSha256": "727cb660f4a23d1d3f717b4b8f4417f7cddc4641e001aa2619fcb2c3657c5768",
+      "indexBlob": "e598e76432b907f059000a05de9cf655978e9eee",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/client-build/runtime.mjs",
+      "bytes": 3842,
+      "workingTreeSha256": "74b06964b0dc44357da36e4b7c9d303bf427726664dbe1159f76522f78365c25",
+      "indexBlob": "abf8caa882c69f79ff9cb7da3a13f1aaf99bc330",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "MagicGameClient/tools/launch-client.mjs",
+      "bytes": 3928,
+      "workingTreeSha256": "6c0a5068847ce7df78b279cf0f35dd1c971fc2923c38ec354c39fafb2fa897c9",
+      "indexBlob": "fcf3dcb6643856580fcea081ff1e8d2f5671c7b2",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/web/NativeEditorShell.java",
+      "bytes": 9613,
+      "workingTreeSha256": "1d28ff8806605ccffda3a8be2ac2bd43cf40a8eb6e588a2a324fe1e838f65675",
+      "indexBlob": "59a11ba58b55a1782bfee588c66b7b10ef25ae55",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/design/DesignRecordService.java",
+      "bytes": 23372,
+      "workingTreeSha256": "c9351341c380f5a11fcad1acf03de06d5078c426a433e1393e790e8a2fd20eca",
+      "indexBlob": "f1f62f9db2c4651db47ca89fbc1930bed3ca9b56",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/protocol/ObservedDesignGenerationController.java",
+      "bytes": 13576,
+      "workingTreeSha256": "17a516dd3c60b45432a8cffb86ce55c51885a6b8a5bca33b1eb349982780bd71",
+      "indexBlob": "0ebfa789bcb08d0d13d4a97705909dfd19bca2d3",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/protocol/ObservedRippleDocumentsController.java",
+      "bytes": 23196,
+      "workingTreeSha256": "4655cbeabe609478b06142726643e8bf00a23d6ed917cac467dcdcc54b2f10dc",
+      "indexBlob": "049fb41b940a5b88d8e6c0d1e27445efe82d7e6b",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/protocol/ObservedBlobUploadController.java",
+      "bytes": 9436,
+      "workingTreeSha256": "66866bbc67d9a1c5b38fdf92a866b53d965b6e031ee8c6c03aa1a344f52678cb",
+      "indexBlob": "1bff175d1111c05becf02992aae65d6ac2302e20",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/protocol/ServedMediaRenditionController.java",
+      "bytes": 13560,
+      "workingTreeSha256": "a2b4969460faf0103996d5971b0f7b95bc3965631ad60df993ab3bf245da16ce",
+      "indexBlob": "3044c24752a8955f13cd435523d8f085fb142e05",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/protocol/OwnedFolderService.java",
+      "bytes": 71272,
+      "workingTreeSha256": "0ba177b2bf08dec883579d5a81701eaead21b27e501f0ca15622ba745ebab8a0",
+      "indexBlob": "53ee194862dfc99258c7ba4cbe191ab8be074b7d",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/ObservedStreamWebSocketConfiguration.java",
+      "bytes": 3060,
+      "workingTreeSha256": "4a26857d4b9720e72d4c472ed5779011ee659ffee5051f77e85276be159ecffe",
+      "indexBlob": "a3e3d282b2374443508351732fd89359bef1008e",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/StreamRippleDeltaService.java",
+      "bytes": 15449,
+      "workingTreeSha256": "d58a0f956243e61eef7f030b86f7f38ea8665d47d19b2c549dbf0dc1d0f8c63e",
+      "indexBlob": "bd00fad556d5b2b338c88f909c3ba47344b4f59d",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/StreamRippleReplicaService.java",
+      "bytes": 56590,
+      "workingTreeSha256": "f454aca70aafef6696f87f5e2712b7b5bdad00a795b56d11990f46ab1fcd8e2c",
+      "indexBlob": "39b37d94469434ebc3e1750962076673e840249f",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/NativeRippleReceipts.java",
+      "bytes": 11878,
+      "workingTreeSha256": "17775d7b69a7e9993dbb1c650520d3174d1975d07d62f89c1631e8b2615785b1",
+      "indexBlob": "9b7e35521de37e27750aef6b7651b235d376cb1d",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/NativeDocumentRevisions.java",
+      "bytes": 5274,
+      "workingTreeSha256": "aba0f3eb3b2e7025fd97115211e316760cbd367a9ab32582e65ac8ac10440125",
+      "indexBlob": "ae59ba5c4c0421fcaa1d199d0d26789f228393bb",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/stream/DesignAssetIndexer.java",
+      "bytes": 3756,
+      "workingTreeSha256": "6f8fc3b899c81a5fe19c4b60de7b8db0f28b675c1afd924d5f8c8808a6563046",
+      "indexBlob": "31a45f2019791dd38e632ef5ceca6d506fd3b161",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/magiclayer/MagicLayerJobService.java",
+      "bytes": 65751,
+      "workingTreeSha256": "9f294479f5f9f73fce5f618f295bf3d7a1a03996d8ccdd84f9049dbe3c6cf287",
+      "indexBlob": "1daf2967c9cf8977e2f6f39c2cd54ea2face90d8",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/magiclayer/ManagedLayerStorage.java",
+      "bytes": 15957,
+      "workingTreeSha256": "fc54741f191f63a922a16cb63f8c560983706ce6c008fd4f3feb7259f38fd604",
+      "indexBlob": "58c4b270e11291135115aacc2c30099a5b41f182",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/recovery/media/MediaUploadService.java",
+      "bytes": 35524,
+      "workingTreeSha256": "fd7512649368eb6d583d61644bd32b5f1695ff78fcc61673b07dcc33072cc190",
+      "indexBlob": "3fb72494136cc06839458f722d13bd69722e019f",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/storage/NativeWorkRegistry.java",
+      "bytes": 13908,
+      "workingTreeSha256": "963aa79b25e3c093874d63705dde2fb6c1430931e2aaae7f8444b96f4757092b",
+      "indexBlob": "588542f3c6c63d42baa8c66a7bc2cfe87527f469",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/storage/StorageRoutingService.java",
+      "bytes": 5185,
+      "workingTreeSha256": "8954a25061a6980e612ee76527fcf95b5710b1336cb4bb90eb6ce9510f12ecb6",
+      "indexBlob": "3633abc4d66f2f8dcea843f9ded7c297881c4c9e",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/security/ReplayLoginSecurityConfiguration.java",
+      "bytes": 1893,
+      "workingTreeSha256": "f2ee39ebda80d42e7a664b8d1d2e0aa3c287c121a9184837f43555c87ad930db",
+      "indexBlob": "be266780e8d93169bfc9080de70972f69febe03c",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/security/ReplaySessionAuthenticationFilter.java",
+      "bytes": 2495,
+      "workingTreeSha256": "d2727eea1987c124dc37a0f4b55c7febbf8a23e00be7e0c8e1e69792a09ae650",
+      "indexBlob": "6094d0951060dc81f04c310fe3e640fc367d81b2",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/src/main/java/com/magicgamestudio/server/security/ProductionSecurityConfiguration.java",
+      "bytes": 5949,
+      "workingTreeSha256": "c92b6a69bc45318ebf970375a93aefecd161bf50e82b5b80d515c7d90a8da397",
+      "indexBlob": "c9cd009a561c742ac0a1d4cfad0b9566f1e634a0",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    },
+    {
+      "path": "Server/docs/SERVER_CODE_MAP.md",
+      "bytes": 6099,
+      "workingTreeSha256": "442d134d9d1ba2293f262f2ed0c6113d9b1c1440af2e87193b627ae3e7df6cb1",
+      "indexBlob": "393dd440df1e5a2af864c8bf91c75232828d506a",
+      "gitTracked": true,
+      "inspection": "static-code-or-manifest-read; not a runtime acceptance"
+    }
+  ]
+}
