@@ -4,7 +4,7 @@
 
 ## 当前复制开发架构（2026-10-11）
 
-用户进一步明确：原代码不动，完整复制 AI 图层编辑器和服务端的可用实现形成新系统，包含图层显示、选择、编辑、通信、存储。实施依据为[复制架构](ui-design-copy-architecture.zh-CN.md)、[源码调研](ui-design-reuse-research.zh-CN.md)、[主方案](ui-design-platform-integration.zh-CN.md)与[原界面基线](ui-design-editor-baseline.zh-CN.md)。本轮仅更新调研和文档，未施工副本。
+用户进一步明确：原代码不动，完整复制 AI 图层编辑器和服务端的可用实现形成新系统，以完整原客户端功能与业务逻辑为基线做增量需求；图层显示、选择、编辑、通信、存储只是重点例子，不能只保留这一部分。实施依据为[复制架构](ui-design-copy-architecture.zh-CN.md)、[源码调研](ui-design-reuse-research.zh-CN.md)、[主方案](ui-design-platform-integration.zh-CN.md)与[原界面基线](ui-design-editor-baseline.zh-CN.md)。本轮仅更新调研和文档，未施工副本。
 
 产品保留复制来的原生文档/事务/Undo 和 baseline/delta 存储；标准正式修订是确定 native checkpoint 的不可变投影。下文 0.1 契约及插件离线预检仍可用，旧自建标准会话/reducer 只作测试与语义参考，不能强制作为产品唯一作者状态或替换原历史。早期 SQL 绑定原 design_record 的设计未部署，已被新产品独立记录/持久化架构替代；此处不改写已发布 0.1 包或 tarball。
 
