@@ -41,4 +41,6 @@
 
 P0-A 独立契约已实现。P0-B 原生画布/单一历史/旧保存隔离仍待验证；随后做 P1a/P2a 真实会话保存重开，再接上传、配对授权及 P3 在线回执。在线提交、完整 PNG 重建和平台 PSD/FGUI 导出尚未通过。
 
+平台随后已推进到 [作者会话与投影准备提交 `7ffed79225`](https://github.com/bambom/GameMagicTool/commit/7ffed79225e21bedc45a06377eb8794b0f9d7b24)：新增标准命令到画布键的映射、嵌套坐标、实例覆盖、文字输入会话、视图重建和异常恢复。17 项独立会话测试与独立浏览器模块打包通过。测试使用视图替身，没有证明 OS 中文输入、新窗口、原生画布或保存隔离通过；阶段边界和下一步见 [P0-B 记录](https://github.com/bambom/GameMagicTool/blob/7ffed79225e21bedc45a06377eb8794b0f9d7b24/docs/ui-design/P0-B-SESSION.md)。契约内容未变化，本插件仍固定消费上文 `5bd104070d` 的 tarball。
+
 后续同步：从所选平台提交 build/test/pack，更新 vendor 归档/provenance，用 `pnpm update @magicgamestudio/ui-design-contract --ignore-scripts` 刷新锁的完整性，再核对安装包 `SPEC_DIGEST`。每次实际发布调整规范时更新版本，不覆盖已发布版本语义。
