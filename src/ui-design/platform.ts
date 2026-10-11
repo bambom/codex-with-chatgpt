@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { z } from "zod";
 import { getSpecification, SPEC_DIGEST, SPEC_VERSION, type SpecSection } from "@magicgamestudio/ui-design-contract/spec";
 import { hashDocument, parseStrict } from "@magicgamestudio/ui-design-contract";
-import { ONLINE_VERSION, ONLINE_DIGEST, onlineProtocol } from "@magicgamestudio/ui-design-contract/online";
+import { ONLINE_VERSION, ONLINE_DIGEST, onlineProtocol, assertOnlineError, type OnlineError } from "@magicgamestudio/ui-design-contract/online";
 import type { Workspace } from "../workspace/manager.js";
 import { atomicJson, containedPath, readJson, stateRoot, withLock, UiWorkflowError } from "../ui/storage.js";
 
@@ -75,7 +75,15 @@ async function request(server: string, route: string, method = "GET", body?: unk
     redirect: "error", signal: AbortSignal.timeout(binary ? 120000 : 30000), credentials: "omit" }); }
   catch { return fail("PLATFORM_UNREACHABLE", "Could not reach the configured platform; no completion is confirmed."); }
   if (!response.ok) {
-    await response.body?.cancel();
+    let diagnostic: OnlineError | undefined;
+    if (response.headers.get("content-type")?.toLowerCase().includes("application/json")) {
+      try {
+        const value = assertOnlineError(await boundedJson(response, 256 * 1024));
+        if (value.httpStatus === response.status && (!value.query || route === value.query.statusPath.slice("/ui-design/api/v1".length)
+          || route.startsWith(value.query.statusPath.slice("/ui-design/api/v1".length) + "/"))) diagnostic = value;
+      } catch { /* A malformed error cannot authorize any retry or expose unrelated query identities. */ }
+    } else await response.body?.cancel();
+    if (diagnostic) throw new UiWorkflowError(diagnostic.code, "Platform rejected this operation; follow the attached field diagnostics and retry action.", diagnostic);
     return fail("PLATFORM_HTTP_" + response.status, response.status === 401 ? "Platform connection expired or was revoked; pair again locally."
       : response.status === 409 ? "Platform version changed; refresh the design context before retrying."
       : response.status === 404 ? "The design or requested operation is unavailable to this connection." : "Platform rejected the request.");
@@ -84,11 +92,14 @@ async function request(server: string, route: string, method = "GET", body?: unk
   if (!response.headers.get("content-type")?.toLowerCase().includes("application/json")) {
     await response.body?.cancel(); return fail("PLATFORM_RESPONSE_INVALID", "Expected a platform JSON response.");
   }
+  return boundedJson(response, MAX_RESPONSE);
+}
+async function boundedJson(response: Response, maximum: number): Promise<unknown> {
   const reader = response.body?.getReader(); if (!reader) return fail("PLATFORM_RESPONSE_INVALID", "Platform response is empty.");
   const chunks: Uint8Array[] = []; let count = 0;
   try {
     while (true) { const { done, value } = await reader.read(); if (done) break; count += value.byteLength;
-      if (count > MAX_RESPONSE) { await reader.cancel(); return fail("PLATFORM_RESPONSE_LIMIT", "Platform response exceeded the limit."); } chunks.push(value); }
+      if (count > maximum) { await reader.cancel(); return fail("PLATFORM_RESPONSE_LIMIT", "Platform response exceeded the limit."); } chunks.push(value); }
     return JSON.parse(Buffer.concat(chunks).toString("utf8"));
   } catch (error) { if (error instanceof UiWorkflowError) throw error; return fail("PLATFORM_RESPONSE_INVALID", "Platform returned invalid JSON."); }
   finally { reader.releaseLock(); }
@@ -174,7 +185,7 @@ export async function platformValidate(workspace: Workspace, design: string, che
 export async function platformOnlineProtocol(workspace: Workspace) {
   const { credential, token } = await connected(workspace);
   const value = z.object({ protocolVersion: z.literal(ONLINE_VERSION), onlineDigest: z.literal(ONLINE_DIGEST), data: z.unknown(),
-    capabilities: z.object({ resumableIntake: z.boolean(), nativeImport: z.boolean(), formalSubmission: z.boolean(), nativeDraftPublication: z.boolean(), concurrentMerge: z.boolean() }) })
+    capabilities: z.object({ resumableIntake: z.boolean(), chunkUpload: z.boolean(), structuredErrors: z.boolean(), nativeImport: z.boolean(), formalSubmission: z.boolean(), nativeDraftPublication: z.boolean(), concurrentMerge: z.boolean() }) })
     .safeParse(await request(credential.server, "/online-protocol", "GET", undefined, token));
   if (!value.success || hashDocument(value.data.data as never) !== hashDocument(onlineProtocol() as never))
     return fail("PLATFORM_ONLINE_PROTOCOL_MISMATCH", "The platform intake protocol differs from the pinned plugin protocol.");
@@ -183,7 +194,7 @@ export async function platformOnlineProtocol(workspace: Workspace) {
 
 /** Internal fixed-design transport; credentials and endpoint selection never become tool arguments. */
 export async function platformIntakeRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown) {
-  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/files\/[0-9]{1,4})?)?$/.test(suffix)
+  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/files\/[0-9]{1,4}(?:\/chunks\/[0-9]{1,9}|\/complete)?)?)?$/.test(suffix)
     && !/^\/revisions\/[1-9][0-9]{0,9}$/.test(suffix) && suffix !== "/publications")
     return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");
   const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");

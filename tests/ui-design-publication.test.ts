@@ -27,13 +27,13 @@ it("accepts only a persisted receipt bound to this candidate and exact validatio
   const server=http.createServer(async(req,res)=>{
     for await(const _ of req){} res.setHeader("Content-Type","application/json");let value:unknown;
     if(req.url?.endsWith("/exchange"))value={connectionId:uuid,accessToken:"uid_"+"a".repeat(43),tokenType:"Bearer",expiresAt:new Date(Date.now()+3600000).toISOString(),designIds:[design],scopes:["design.read","design.submit"]};
-    else if(req.url?.endsWith("/online-protocol"))value={protocolVersion:ONLINE_VERSION,onlineDigest:ONLINE_DIGEST,data:onlineProtocol(),capabilities:{resumableIntake:true,nativeImport:true,formalSubmission:true,nativeDraftPublication:true,concurrentMerge:false}};
+    else if(req.url?.endsWith("/online-protocol"))value={protocolVersion:ONLINE_VERSION,onlineDigest:ONLINE_DIGEST,data:onlineProtocol(),capabilities:{resumableIntake:true,chunkUpload:true,structuredErrors:true,nativeImport:true,formalSubmission:true,nativeDraftPublication:true,concurrentMerge:false}};
     else if(req.url?.endsWith("/validate")){validated=true;value=report;}
     else if(req.url?.endsWith("/commit")){commitCalls++;if(!tamper)committed=true;value=tamper?{...receipt,submittedDocumentHash:"c".repeat(64),committedDocumentHash:"c".repeat(64)}:receipt;}
     else if(req.url?.endsWith("/current")){res.statusCode=204;res.end();return;}
     else value={protocolVersion:ONLINE_VERSION,onlineDigest:ONLINE_DIGEST,submissionId:sub,designId:design,checkpointId:uuid,baseRevision:0,specDigest:SPEC_DIGEST,
-      state:committed?"COMMITTED":"BUNDLE_STORED",documentHash:hash,assetManifestHash:hash,files:[{index:0,path:"test.png",role:"approved",sha256:hash,byteLength:10,stored:true}],
-      nativeImported:committed||fakeSuccess,published:committed||fakeSuccess,submitted:committed||fakeSuccess,validation:validated?report:null,receipt:committed?receipt:null};
+      state:committed?"COMMITTED":"BUNDLE_STORED",documentHash:hash,assetManifestHash:hash,files:[{index:0,path:"test.png",role:"approved",sha256:hash,byteLength:10,stored:true,nextOffset:10,uploadState:"READY",uploadExpiresAt:null}],
+      nativeImported:committed||fakeSuccess,published:committed||fakeSuccess,submitted:committed||fakeSuccess,validation:validated?report:null,receipt:committed?receipt:null,lastError:null};
     res.end(JSON.stringify(value));
   });
   server.listen(0,"127.0.0.1");await once(server,"listening");

@@ -19,7 +19,7 @@
   },
   "packageManager": "pnpm@11.24.0",
   "dependencies": {
-    "@magicgamestudio/ui-design-contract": "file:vendor\\magicgamestudio-ui-design-contract-0.3.0.tgz",
+    "@magicgamestudio/ui-design-contract": "file:vendor\\magicgamestudio-ui-design-contract-0.4.0.tgz",
     "@modelcontextprotocol/sdk": "1.30.0",
     "ag-psd": "31.0.3",
     "commander": "^14.0.0",

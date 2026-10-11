@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { assertDocument, parseStrict, hashDocument, hashBytes, validateManifest, type AssetManifest } from "@magicgamestudio/ui-design-contract";
 import { SPEC_DIGEST } from "@magicgamestudio/ui-design-contract/spec";
-import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, type OnlineReceipt } from "@magicgamestudio/ui-design-contract/online";
+import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, assertOnlineError, isOnlineProtocolIdentity, type OnlineReceipt } from "@magicgamestudio/ui-design-contract/online";
 import type { Workspace } from "../workspace/manager.js";
 import { UiWorkflowError, safeRelative } from "../ui/storage.js";
 import { readBounded } from "./precheck.js";
@@ -9,29 +9,39 @@ import { platformIntakeRequest, platformOnlineProtocol, platformSpecification } 
 
 const sha = z.string().regex(/^[a-f0-9]{64}$/);
 const statusSchema = z.object({
-  protocolVersion: z.literal(ONLINE_VERSION), onlineDigest: z.literal(ONLINE_DIGEST), submissionId: z.string().regex(/^S[a-f0-9]{32}$/),
+  protocolVersion: z.string(), onlineDigest: sha, submissionId: z.string().regex(/^S[a-f0-9]{32}$/),
   designId: z.string(), checkpointId: z.string().uuid(), baseRevision: z.number().int().min(0).max(1e9), specDigest: z.literal(SPEC_DIGEST),
   state: z.enum(["DRAFT", "BUNDLE_STORED", "CANCELLED", "COMMITTED"]), documentHash: sha.nullable(), assetManifestHash: sha.nullable(),
-  files: z.array(z.object({ index: z.number().int().nonnegative(), path: z.string(), role: z.string(), sha256: sha, byteLength: z.number().int().positive(), stored: z.boolean() })).max(ONLINE_LIMITS.files),
-  nativeImported: z.boolean(), published: z.boolean(), submitted: z.boolean(), validation: z.unknown().nullable(), receipt: z.unknown().nullable(),
+  files: z.array(z.object({ index: z.number().int().nonnegative(), path: z.string(), role: z.string(), sha256: sha, byteLength: z.number().int().positive(), stored: z.boolean(),
+    nextOffset: z.number().int().nonnegative(), uploadState: z.enum(["DECLARED", "RECEIVING", "READY", "EXPIRED"]), uploadExpiresAt: z.string().datetime({ offset: true }).nullable() })).max(ONLINE_LIMITS.files),
+  nativeImported: z.boolean(), published: z.boolean(), submitted: z.boolean(), validation: z.unknown().nullable(), receipt: z.unknown().nullable(), lastError: z.unknown().nullable(),
 });
 function fail(code: string, message: string): never { throw new UiWorkflowError(code, message); }
 function status(value: unknown, design: string, submission?: string) {
   const parsed = statusSchema.safeParse(value);
-  if (!parsed.success || parsed.data.designId !== design || submission !== undefined && parsed.data.submissionId !== submission)
+  if (!parsed.success || !isOnlineProtocolIdentity(parsed.data.protocolVersion, parsed.data.onlineDigest) || parsed.data.designId !== design || submission !== undefined && parsed.data.submissionId !== submission)
     return fail("PLATFORM_RESPONSE_INVALID", "Platform returned an invalid intake status.");
   const row = parsed.data;
-  if (row.files.some((f, i) => f.index !== i) || ["BUNDLE_STORED", "COMMITTED"].includes(row.state) && (row.files.length === 0 || row.files.some(f => !f.stored)))
+  if (row.files.some((f, i) => f.index !== i || f.nextOffset > f.byteLength || f.stored !== (f.uploadState === "READY") || f.stored && f.nextOffset !== f.byteLength
+      || f.nextOffset !== f.byteLength && f.nextOffset % ONLINE_LIMITS.chunkBytes !== 0 || f.uploadState === "DECLARED" && f.nextOffset !== 0)
+    || ["BUNDLE_STORED", "COMMITTED"].includes(row.state) && (row.files.length === 0 || row.files.some(f => !f.stored)))
     return fail("PLATFORM_RESPONSE_INVALID", "Platform intake file state is inconsistent.");
   const validation = row.validation == null ? null : checkedValidation(row.validation, design, row.submissionId);
   const receipt = row.receipt == null ? null : checkedReceipt(row.receipt, design, row.submissionId);
+  let lastError = null;
+  try {
+    if (row.lastError != null) {
+      lastError = assertOnlineError(row.lastError);
+      if (lastError.query?.designId !== design || lastError.query.submissionId !== row.submissionId) throw new Error();
+    }
+  } catch { return fail("PLATFORM_RESPONSE_INVALID", "Platform retained an invalid error identity."); }
   if (row.nativeImported !== (row.state === "COMMITTED") || row.published !== row.nativeImported || row.submitted !== row.nativeImported
     || (row.state === "COMMITTED") !== (receipt !== null)
     || validation && (validation.documentHash !== row.documentHash || validation.assetManifestHash !== row.assetManifestHash)
     || receipt && (receipt.origin !== "PLUGIN_CANDIDATE" || receipt.committedDocumentHash !== row.documentHash || receipt.committedAssetManifestHash !== row.assetManifestHash
       || receipt.baseRevision !== row.baseRevision || receipt.validationId !== validation?.validationId))
     return fail("PLATFORM_RESPONSE_INVALID", "Platform publication status is inconsistent.");
-  return { ...row, validation, receipt };
+  return { ...row, validation, receipt, lastError };
 }
 function checkedValidation(value: unknown, design: string, submission: string) {
   try { const report = assertOnlineValidation(value); if (report.designId !== design || report.submissionId !== submission) throw new Error(); return report; }
@@ -83,19 +93,32 @@ export async function uploadIntakeBundle(workspace: Workspace, input: UploadBund
       return fail("PLATFORM_RESPONSE_INVALID", "Intake status differs from the bound candidate.");
   };
   verify();
-  let uploaded = 0, resumed = 0;
+  let uploaded = 0, resumed = 0, uploadedBlocks = 0, resumedBytes = 0;
   for (let i = 0; i < manifest.files.length; i++) {
     if (row.files[i]!.stored) { resumed++; continue; }
     const file = manifest.files[i]!;
+    if (row.files[i]!.uploadState === "EXPIRED") return fail("UPLOAD_EXPIRED", "This receiving file expired; begin a new submission.");
     const bytes = await readBounded(workspace, directory + file.path, ONLINE_LIMITS.fileBytes, file.byteLength);
     if (hashBytes(bytes) !== file.sha256) return fail("FILE_HASH", "A bundle file changed before upload; retained files can be resumed.");
-    row = status(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/files/" + i, "PUT", bytes), design, submission);
+    let offset = row.files[i]!.nextOffset; resumedBytes += offset;
+    while (offset < bytes.length) {
+      const block = bytes.subarray(offset, Math.min(offset + ONLINE_LIMITS.chunkBytes, bytes.length));
+      const ack = z.object({ submissionId: z.string(), fileIndex: z.number().int(), offset: z.number().int(), byteLength: z.number().int(), sha256: sha,
+        nextOffset: z.number().int(), repeated: z.boolean() }).safeParse(await platformIntakeRequest(workspace, design,
+          "/submissions/" + submission + "/files/" + i + "/chunks/" + offset, "PUT", block));
+      if (!ack.success || ack.data.submissionId !== submission || ack.data.fileIndex !== i || ack.data.offset !== offset || ack.data.byteLength !== block.length
+        || ack.data.sha256 !== hashBytes(block) || ack.data.nextOffset < offset + block.length || ack.data.nextOffset > bytes.length
+        || ack.data.nextOffset !== bytes.length && ack.data.nextOffset % ONLINE_LIMITS.chunkBytes !== 0)
+        return fail("PLATFORM_RESPONSE_INVALID", "Platform block receipt differs from the uploaded bytes.");
+      offset = ack.data.nextOffset; uploadedBlocks++;
+    }
+    row = status(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/files/" + i + "/complete", "POST", {}), design, submission);
     verify();
     if (!row.files[i]!.stored) return fail("PLATFORM_RESPONSE_INVALID", "The platform did not confirm file retention.");
     uploaded++;
   }
   if (row.state !== "BUNDLE_STORED") return fail("PLATFORM_RESPONSE_INVALID", "The platform did not confirm the complete bundle.");
-  return { ...row, uploadedFiles: uploaded, resumedFiles: resumed };
+  return { ...row, uploadedFiles: uploaded, resumedFiles: resumed, uploadedBlocks, resumedBytes };
 }
 
 export async function validateIntake(workspace: Workspace, design: string, submission: string) {

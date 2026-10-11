@@ -60,7 +60,7 @@ export function registerUiDesignTools(
           true,
         );
       if (e instanceof UiWorkflowError || e instanceof WorkspaceError)
-        return result({ error: e.code, message: e.message }, true);
+        return result({ error: e.code, message: e.message, ...(e instanceof UiWorkflowError && e.details ? { details: e.details } : {}) }, true);
       ctx.logger.error("UI design precheck failed", {
         errorType: e instanceof Error ? e.name : "unknown",
       });
@@ -172,11 +172,11 @@ export function registerUiDesignTools(
     return call(extra.authInfo?.scopes, () => beginIntake(ctx.workspace, args.design_id, args.request_id, args.checkpoint_id, args.base_revision));
   });
   server.registerTool("ui_design_submission_status", {
-    title: "Read retained platform candidate state", description: "Read this actor's persistent candidate and per-file retention status. Use after interruption or an uncertain upload. BUNDLE_STORED means declared file bytes are retained; submitted:false and published:false must not be reported as a formal save or receipt.",
+    title: "Read retained platform candidate state", description: "Read this actor's persistent candidate, per-file nextOffset/retention state, latest historical field error and publication receipt. Use after interruption or an uncertain upload. BUNDLE_STORED means declared file bytes are retained; submitted:false and published:false must not be reported as a formal save or receipt.",
     inputSchema: { design_id: designId, submission_id: submissionId }, annotations: onlineRead,
   }, async (args, extra) => call(extra.authInfo?.scopes, () => intakeStatus(ctx.workspace, args.design_id, args.submission_id)));
   server.registerTool("ui_design_submission_upload", {
-    title: "Upload or resume a complete UI candidate bundle", description: "Read a document, manifest and their exact referenced files from the connected workspace, preflight all hashes, bind the immutable candidate and upload missing files to the configured platform. Include original/approved images, assets, fonts, preview, overview and provenance as required by the manifest. Repeating resumes whole missing files. Never follows endpoint arguments or uploads files outside the workspace. Requires workspace.write and design.submit. The result is retained candidate bytes, not publication or a formal receipt.",
+    title: "Upload or resume a complete UI candidate bundle", description: "Read a document, manifest and their exact referenced files from the connected workspace, preflight all hashes, bind the immutable candidate and upload missing files to the configured platform. Include original/approved images, assets, fonts, preview, overview and provenance as required by the manifest. Repeating resumes durable 1 MiB blocks at the server nextOffset, including after process restarts. Expired uploads require a new submission. Never follows endpoint arguments or uploads files outside the workspace. Requires workspace.write and design.submit. The result is retained candidate bytes, not publication or a formal receipt.",
     inputSchema: { design_id: designId, submission_id: submissionId, document_path: PATH, manifest_path: PATH, package_directory: PATH }, annotations: onlineWrite,
   }, async (args, extra) => {
     if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);

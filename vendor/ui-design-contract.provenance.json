@@ -1,16 +1,16 @@
 {
   "name": "@magicgamestudio/ui-design-contract",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "sourceRepository": "https://github.com/bambom/GameMagicTool.git",
-  "sourceCommit": "800abb6c037b4d90dcc80cac0e8495b12135aa23",
+  "sourceCommit": "2e367b2e837c82eade08e2a8a95eacb118acc2a6",
   "sourcePath": "packages/ui-design-contract",
   "sourceBranch": "codex/ui-design-platform",
   "specDigest": "e53fa79ee947760f5c18631dea8d1cd12544715620309872a7702f97e55d301a",
-  "tarball": "magicgamestudio-ui-design-contract-0.3.0.tgz",
-  "tarballSha256": "8322c6b88189e4b05d5d5216004f89ea79b45c386ba0ccaf4651c86025a8f7c4",
-  "build": "npm run build; node --test test/online-publication.test.mjs (3 passed); npm pack --ignore-scripts; pnpm add --offline --ignore-scripts; plugin build and receipt test passed; real platform publication integration verified",
+  "tarball": "magicgamestudio-ui-design-contract-0.4.0.tgz",
+  "tarballSha256": "f67841f4ba1e2007233b170dae3f7886c5f3f79b52251529495d387d5a3ce7e6",
+  "build": "Shared online contract tests: 5 passed. Plugin build and 4 focused tests passed. Live plugin process recovery, block identity/rejection, expiration/cancel and separate-server-JVM recovery passed across the recorded first/repair batches. npm pack --ignore-scripts; pnpm add --offline --ignore-scripts.",
   "distribution": "Vendored immutable npm tarball pinned by pnpm-lock.yaml integrity; not published to a public registry",
   "runtimeDeployment": "Not deployed to the running plugin",
-  "onlineProtocolVersion": "1.1.0",
-  "onlineDigest": "ebca3835c76a270cea16e276867d60cf4310bc309ed0c08b018a2c0dc29834cb"
+  "onlineProtocolVersion": "1.2.0",
+  "onlineDigest": "f7cdf29a7115eb5da6c041c5eb19eb1c79bfe6d013aeafcdfae2bf0d9f83aaff"
 }

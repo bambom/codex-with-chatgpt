@@ -1,6 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { hashDocument, hashBytes } from '@magicgamestudio/ui-design-contract';
 import { SPEC_DIGEST } from '@magicgamestudio/ui-design-contract/spec';
 import { Workspace } from '../../dist/workspace/manager.js';
@@ -36,7 +39,7 @@ try {
   for(const name of ['source.png','reference.png','skin.png','skinNext.png','fixture-font.ttf'])
     await fs.copyFile(path.join(fixture.contractFixtures,'files',name),path.join(bundle,'files',name));
   for(const name of ['preview','overview'])await fs.copyFile(path.join(bundle,'files/reference.png'),path.join(bundle,'outputs',name+'.png'));
-  await fs.writeFile(path.join(bundle,'outputs/provenance.json'),JSON.stringify({synthetic:true,purpose:'Intake byte and resume integration; no visual approval'}));
+  await fs.writeFile(path.join(bundle,'outputs/provenance.json'),JSON.stringify({synthetic:true,purpose:'Intake byte and resume integration; no visual approval',...(fixture.chunkResume?{padding:'x'.repeat(2*1048576)}:{})}));
   const files=[];
   const add=async(name,role,id)=>{const bytes=await fs.readFile(path.join(bundle,name));files.push({path:name,role,logicalId:id,version:1,sha256:hashBytes(bytes),byteLength:bytes.length});};
   await add('files/source.png','original','source');
@@ -48,7 +51,16 @@ try {
   await platformIntakeRequest(workspace,fixture.designId,'/submissions/'+stage.submissionId+'/candidate','PUT',{document,manifest});
   await platformIntakeRequest(workspace,fixture.designId,'/submissions/'+stage.submissionId+'/files/0','PUT',await fs.readFile(path.join(bundle,files[0].path)));
   const args={designId:fixture.designId,submissionId:stage.submissionId,documentPath:'document.json',manifestPath:'manifest.json',packageDirectory:'bundle'};
-  const uploaded=await uploadIntakeBundle(workspace,args);
+  let uploaded;
+  if(fixture.chunkResume) {
+    const bytes=await fs.readFile(path.join(bundle,files[7].path));
+    await platformIntakeRequest(workspace,fixture.designId,'/submissions/'+stage.submissionId+'/files/7/chunks/0','PUT',bytes.subarray(0,1048576));
+    const input=path.join(fixture.runDirectory,'chunk-worker.json'),output=path.join(fixture.runDirectory,'chunk-worker-result.json');
+    await fs.writeFile(input,JSON.stringify({work,state:process.env.C2C_STATE_DIR,args,output}));
+    await promisify(execFile)(process.execPath,[fileURLToPath(new URL('./chunk-resume-live.mjs',import.meta.url)),input],{timeout:120000});
+    uploaded=JSON.parse(await fs.readFile(output,'utf8'));
+    if(uploaded.resumedBytes!==1048576)throw Error('New plugin process did not resume the retained block');
+  }else uploaded=await uploadIntakeBundle(workspace,args);
   const resumed=await uploadIntakeBundle(workspace,args);
   const skinPath=path.join(bundle,'files/skin.png'),original=await fs.readFile(skinPath),tampered=Buffer.from(original);tampered[0]^=1;
   await fs.writeFile(skinPath,tampered);let localTamperRejected=false;
@@ -66,7 +78,8 @@ try {
   const result={liveProtocol:protocol.capabilities.resumableIntake===true,bundleStored:['BUNDLE_STORED','COMMITTED'].includes(stored.state)&&stored.files.every(f=>f.stored),
     resumePassed:uploaded.uploadedFiles===7&&uploaded.resumedFiles===1&&resumed.uploadedFiles===0&&resumed.resumedFiles===8,
     localTamperRejected,credentialRevoked:disconnected.revoked===true,formalSubmission:stored.submitted,publication:stored.published,
-    submissionId:stage.submissionId,retainedFiles:stored.files.length,nativeDocumentChanged:!!fixture.publication,existingUserDataUsed:false,receipt};
+    submissionId:stage.submissionId,retainedFiles:stored.files.length,nativeDocumentChanged:!!fixture.publication,existingUserDataUsed:false,receipt,
+    chunkResume:!!fixture.chunkResume,resumedBytes:uploaded.resumedBytes,uploadedBlocks:uploaded.uploadedBlocks};
   if(!result.liveProtocol||!result.bundleStored||!result.resumePassed||!localTamperRejected||(!fixture.keepConnection&&!result.credentialRevoked)
     ||result.formalSubmission!==!!fixture.publication||result.publication!==!!fixture.publication)throw Error('Intake assertion failed');
   await fs.writeFile(path.join(fixture.runDirectory,'result.json'),JSON.stringify(result,null,2));

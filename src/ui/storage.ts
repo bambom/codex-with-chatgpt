@@ -16,7 +16,7 @@ export const UI_LIMITS = Object.freeze({
 });
 
 export class UiWorkflowError extends Error {
-  constructor(public readonly code: string, message: string) {
+  constructor(public readonly code: string, message: string, public readonly details?: unknown) {
     super(message);
     this.name = "UiWorkflowError";
   }
