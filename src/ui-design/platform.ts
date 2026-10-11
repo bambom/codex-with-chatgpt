@@ -194,7 +194,7 @@ export async function platformOnlineProtocol(workspace: Workspace) {
 
 /** Internal fixed-design transport; credentials and endpoint selection never become tool arguments. */
 export async function platformIntakeRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown) {
-  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/files\/[0-9]{1,4}(?:\/chunks\/[0-9]{1,9}|\/complete)?)?)?$/.test(suffix)
+  if (!/^\/submissions(?:\/S[a-f0-9]{32}(?:\/candidate|\/validate|\/commit|\/prepare-commit|\/preparations\/[a-f0-9-]{36}|\/files\/[0-9]{1,4}(?:\/chunks\/[0-9]{1,9}|\/complete)?)?)?$/.test(suffix)
     && !/^\/revisions\/[1-9][0-9]{0,9}$/.test(suffix) && suffix !== "/publications")
     return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");
   const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");

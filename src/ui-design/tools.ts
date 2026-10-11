@@ -8,7 +8,7 @@ import type { Logger } from "../logger/index.js";
 import { UiWorkflowError } from "../ui/storage.js";
 import { precheckAuthoring } from "./precheck.js";
 import { platformStatus, platformSpecification, platformContext, platformCheckpoint, platformValidate, platformOnlineProtocol } from "./platform.js";
-import { beginIntake, intakeStatus, uploadIntakeBundle, cancelIntake, validateIntake, commitIntake, submitIntakeBundle, readStandardRevision, publishNativeDraft } from "./intake.js";
+import { beginIntake, intakeStatus, uploadIntakeBundle, cancelIntake, validateIntake, prepareCommitIntake, commitIntake, submitIntakeBundle, readStandardRevision, publishNativeDraft } from "./intake.js";
 
 const section = z.enum([
   "summary",
@@ -198,14 +198,21 @@ export function registerUiDesignTools(
     return call(extra.authInfo?.scopes, () => validateIntake(ctx.workspace, args.design_id, args.submission_id));
   });
   server.registerTool("ui_design_submission_commit", {
-    title: "Publish a validated platform candidate", description: "Conditionally import this exact validated candidate into native history and commit a standard revision. Requires the pinned native checkpoint and standard head still to match and native editor channels to be closed. Returns a persisted receipt verified against the shared online schema and candidate hashes. Reuse the same submission and validation ID after uncertain results. Requires workspace.write and design.submit.",
+    title: "Publish a validated platform candidate", description: "Prepare and revalidate the current native version with this candidate, allowing only the platform's finite independent asset-content versus scene-position merge, then conditionally publish. Supply preparation_id to commit a previously inspected preparation; otherwise a fresh current preparation is requested. Final native/head versions must still match and native editor channels must be closed. Returns a persisted receipt distinguishing submitted N from committed M hashes and validations. Reuse submission/validation/preparation identities after uncertain results. Requires workspace.write and design.submit.",
+    inputSchema: { design_id: designId, submission_id: submissionId, validation_id: z.string().uuid(), preparation_id: z.string().uuid().optional() }, annotations: onlineWrite,
+  }, async (args, extra) => {
+    if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
+    return call(extra.authInfo?.scopes, () => commitIntake(ctx.workspace, args.design_id, args.submission_id, args.validation_id, args.preparation_id));
+  });
+  server.registerTool("ui_design_submission_prepare_commit", {
+    title: "Prepare and validate a finite UI merge", description: "Pin current native C and standard head, compare original base B with candidate N, and allow only the declared independent asset-content versus scene-position merge. Revalidate all M dependencies and native projection and render a new fixed preview. Returns preparation ID, original/final hashes, pinned versions, final validation and preview path. Does not publish or alter the native draft. Same-field, coupled and unsupported changes return node/asset field conflicts. Requires workspace.write and design.submit.",
     inputSchema: { design_id: designId, submission_id: submissionId, validation_id: z.string().uuid() }, annotations: onlineWrite,
   }, async (args, extra) => {
     if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);
-    return call(extra.authInfo?.scopes, () => commitIntake(ctx.workspace, args.design_id, args.submission_id, args.validation_id));
+    return call(extra.authInfo?.scopes, () => prepareCommitIntake(ctx.workspace, args.design_id, args.submission_id, args.validation_id));
   });
   server.registerTool("ui_design_submit", {
-    title: "Submit a complete UI candidate to the platform", description: "For a submission ID from ui_design_submission_begin, upload or resume the workspace bundle, request actual platform validation, then conditionally publish. Requires complete source/assets/fonts/preview/overview/provenance and workspace.write plus design.submit. Returns only the verified persisted COMMITTED receipt as success. After an uncertain result reuse the same submission or inspect its status. Conflicts preserve the native draft and candidate; no automatic overwrite or merge.",
+    title: "Submit a complete UI candidate to the platform", description: "For a submission ID from ui_design_submission_begin, upload or resume the workspace bundle, validate N, prepare/revalidate the platform's finite merge M with the current native checkpoint, then conditionally publish. Requires complete source/assets/fonts/preview/overview/provenance and workspace.write plus design.submit. Returns only the verified persisted COMMITTED receipt as success. After an uncertain result reuse the same submission or inspect its status. Node/asset field conflicts preserve the native draft and candidate; do not silently change the original base or overwrite unsupported changes.",
     inputSchema: { design_id: designId, submission_id: submissionId, document_path: PATH, manifest_path: PATH, package_directory: PATH }, annotations: onlineWrite,
   }, async (args, extra) => {
     if (extra.authInfo && !extra.authInfo.scopes.includes("workspace.write")) return result({ error: "INSUFFICIENT_SCOPE", message: "Requires workspace.write." }, true);

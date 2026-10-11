@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { assertDocument, parseStrict, hashDocument, hashBytes, validateManifest, type AssetManifest } from "@magicgamestudio/ui-design-contract";
 import { SPEC_DIGEST } from "@magicgamestudio/ui-design-contract/spec";
-import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, assertOnlineError, isOnlineProtocolIdentity, type OnlineReceipt } from "@magicgamestudio/ui-design-contract/online";
+import { ONLINE_VERSION, ONLINE_DIGEST, ONLINE_LIMITS, assertOnlineValidation, assertOnlineReceipt, assertOnlinePreparation, assertOnlineError, isOnlineProtocolIdentity, type OnlineReceipt, type OnlinePreparation } from "@magicgamestudio/ui-design-contract/online";
 import type { Workspace } from "../workspace/manager.js";
 import { UiWorkflowError, safeRelative } from "../ui/storage.js";
 import { readBounded } from "./precheck.js";
@@ -14,7 +14,7 @@ const statusSchema = z.object({
   state: z.enum(["DRAFT", "BUNDLE_STORED", "CANCELLED", "COMMITTED"]), documentHash: sha.nullable(), assetManifestHash: sha.nullable(),
   files: z.array(z.object({ index: z.number().int().nonnegative(), path: z.string(), role: z.string(), sha256: sha, byteLength: z.number().int().positive(), stored: z.boolean(),
     nextOffset: z.number().int().nonnegative(), uploadState: z.enum(["DECLARED", "RECEIVING", "READY", "EXPIRED"]), uploadExpiresAt: z.string().datetime({ offset: true }).nullable() })).max(ONLINE_LIMITS.files),
-  nativeImported: z.boolean(), published: z.boolean(), submitted: z.boolean(), validation: z.unknown().nullable(), receipt: z.unknown().nullable(), lastError: z.unknown().nullable(),
+  nativeImported: z.boolean(), published: z.boolean(), submitted: z.boolean(), validation: z.unknown().nullable(), receipt: z.unknown().nullable(), lastError: z.unknown().nullable(), preparation: z.unknown().nullable(),
 });
 function fail(code: string, message: string): never { throw new UiWorkflowError(code, message); }
 function status(value: unknown, design: string, submission?: string) {
@@ -28,6 +28,7 @@ function status(value: unknown, design: string, submission?: string) {
     return fail("PLATFORM_RESPONSE_INVALID", "Platform intake file state is inconsistent.");
   const validation = row.validation == null ? null : checkedValidation(row.validation, design, row.submissionId);
   const receipt = row.receipt == null ? null : checkedReceipt(row.receipt, design, row.submissionId);
+  const preparation = row.preparation == null ? null : checkedPreparation(row.preparation, design, row.submissionId);
   let lastError = null;
   try {
     if (row.lastError != null) {
@@ -38,10 +39,12 @@ function status(value: unknown, design: string, submission?: string) {
   if (row.nativeImported !== (row.state === "COMMITTED") || row.published !== row.nativeImported || row.submitted !== row.nativeImported
     || (row.state === "COMMITTED") !== (receipt !== null)
     || validation && (validation.documentHash !== row.documentHash || validation.assetManifestHash !== row.assetManifestHash)
-    || receipt && (receipt.origin !== "PLUGIN_CANDIDATE" || receipt.committedDocumentHash !== row.documentHash || receipt.committedAssetManifestHash !== row.assetManifestHash
-      || receipt.baseRevision !== row.baseRevision || receipt.validationId !== validation?.validationId))
+    || preparation && (preparation.submittedDocumentHash !== row.documentHash || preparation.submittedAssetManifestHash !== row.assetManifestHash
+      || preparation.baseRevision !== row.baseRevision || preparation.candidateValidationId !== validation?.validationId)
+    || receipt && (receipt.origin !== "PLUGIN_CANDIDATE" || receipt.submittedDocumentHash !== row.documentHash || receipt.submittedAssetManifestHash !== row.assetManifestHash
+      || receipt.baseRevision !== row.baseRevision || (receipt.candidateValidationId ?? receipt.validationId) !== validation?.validationId))
     return fail("PLATFORM_RESPONSE_INVALID", "Platform publication status is inconsistent.");
-  return { ...row, validation, receipt, lastError };
+  return { ...row, validation, receipt, lastError, preparation };
 }
 function checkedValidation(value: unknown, design: string, submission: string) {
   try { const report = assertOnlineValidation(value); if (report.designId !== design || report.submissionId !== submission) throw new Error(); return report; }
@@ -50,6 +53,10 @@ function checkedValidation(value: unknown, design: string, submission: string) {
 function checkedReceipt(value: unknown, design: string, submission?: string): OnlineReceipt {
   try { const receipt = assertOnlineReceipt(value); if (receipt.designId !== design || submission !== undefined && receipt.submissionId !== submission) throw new Error(); return receipt; }
   catch { return fail("PLATFORM_RESPONSE_INVALID", "Platform receipt failed the shared online contract."); }
+}
+function checkedPreparation(value: unknown, design: string, submission: string): OnlinePreparation {
+  try { const preparation = assertOnlinePreparation(value); if (preparation.designId !== design || preparation.submissionId !== submission) throw new Error(); return preparation; }
+  catch { return fail("PLATFORM_RESPONSE_INVALID", "Platform commit preparation failed its content and identity contract."); }
 }
 export async function beginIntake(workspace: Workspace, design: string, requestId: string, checkpointId: string, baseRevision: number) {
   z.string().uuid().parse(requestId); z.string().uuid().parse(checkpointId); z.number().int().min(0).max(1e9).parse(baseRevision);
@@ -130,15 +137,46 @@ export async function validateIntake(workspace: Workspace, design: string, submi
     return fail("PLATFORM_RESPONSE_INVALID", "Validation did not bind the retained candidate.");
   return report;
 }
-export async function commitIntake(workspace: Workspace, design: string, submission: string, validationId: string) {
+export async function prepareCommitIntake(workspace: Workspace, design: string, submission: string, validationId: string) {
   z.string().uuid().parse(validationId);
   const current = await intakeStatus(workspace, design, submission);
+  if (current.validation?.validationId !== validationId) return fail("VALIDATION_REQUIRED", "Use this candidate's retained validation ID.");
+  if (current.receipt) {
+    if (current.preparation && current.preparation.preparationId === current.receipt.preparationId) return current.preparation;
+    return fail("SUBMISSION_IMMUTABLE", "This candidate already has a publication receipt.");
+  }
+  if (!(await platformOnlineProtocol(workspace)).capabilities.concurrentMerge) return fail("PLATFORM_MERGE_UNAVAILABLE", "The platform has not enabled finite merge preparation.");
+  const result = checkedPreparation(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/prepare-commit", "POST", { validationId }), design, submission);
+  if (result.candidateValidationId !== validationId || result.baseRevision !== current.baseRevision || result.submittedDocumentHash !== current.documentHash || result.submittedAssetManifestHash !== current.assetManifestHash)
+    return fail("PLATFORM_RESPONSE_INVALID", "Commit preparation did not bind this exact candidate.");
+  return result;
+}
+export async function commitIntake(workspace: Workspace, design: string, submission: string, validationId: string, preparationId?: string) {
+  z.string().uuid().parse(validationId);
+  if (preparationId) z.string().uuid().parse(preparationId);
+  const current = await intakeStatus(workspace, design, submission);
   if (current.validation?.validationId !== validationId) return fail("VALIDATION_REQUIRED", "Use the validation ID retained by this submission.");
-  if (current.receipt) return current.receipt;
-  if (!(await platformOnlineProtocol(workspace)).capabilities.formalSubmission) return fail("PLATFORM_SUBMISSION_UNAVAILABLE", "Formal publication is unavailable.");
-  const receipt = checkedReceipt(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/commit", "POST", { validationId }), design, submission);
-  if (receipt.origin !== "PLUGIN_CANDIDATE" || receipt.validationId !== validationId || receipt.baseRevision !== current.baseRevision
-    || receipt.committedDocumentHash !== current.documentHash || receipt.committedAssetManifestHash !== current.assetManifestHash)
+  if (current.receipt) {
+    if (preparationId && preparationId !== current.receipt.preparationId) return fail("PREPARATION_ID_CHANGED", "The published candidate used a different preparation.");
+    return current.receipt;
+  }
+  const protocol = await platformOnlineProtocol(workspace);
+  if (!protocol.capabilities.formalSubmission) return fail("PLATFORM_SUBMISSION_UNAVAILABLE", "Formal publication is unavailable.");
+  let prepared: OnlinePreparation | null = null;
+  if (preparationId) prepared = checkedPreparation(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/preparations/" + preparationId, "GET"), design, submission);
+  else if (protocol.capabilities.concurrentMerge) prepared = await prepareCommitIntake(workspace, design, submission, validationId);
+  if (prepared && (preparationId && prepared.preparationId !== preparationId || prepared.candidateValidationId !== validationId || prepared.baseRevision !== current.baseRevision || prepared.submittedDocumentHash !== current.documentHash || prepared.submittedAssetManifestHash !== current.assetManifestHash))
+    return fail("PLATFORM_RESPONSE_INVALID", "The prepared result does not belong to this candidate.");
+  const receipt = checkedReceipt(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/commit", "POST", { validationId, ...(prepared ? { preparationId: prepared.preparationId } : {}) }), design, submission);
+  if (receipt.origin !== "PLUGIN_CANDIDATE" || (receipt.candidateValidationId ?? receipt.validationId) !== validationId || receipt.baseRevision !== current.baseRevision
+    || receipt.submittedDocumentHash !== current.documentHash || receipt.submittedAssetManifestHash !== current.assetManifestHash
+    || prepared && (receipt.preparationId !== prepared.preparationId || receipt.committedDocumentHash !== prepared.committedDocumentHash || receipt.committedAssetManifestHash !== prepared.committedAssetManifestHash
+      || receipt.mergeHeadRevision !== prepared.mergeHeadRevision || receipt.mergeNativeCheckpointId !== prepared.mergeNativeCheckpointId
+      || receipt.mergeNativeSequence !== prepared.mergeNativeSequence || receipt.mergeNativeSha256 !== prepared.mergeNativeSha256
+      || receipt.mergeStrategy !== prepared.mergeStrategy || receipt.resourceSide !== prepared.resourceSide || receipt.bridgeSha256 !== prepared.validation.bridgeSha256
+      || hashDocument(receipt.checks) !== hashDocument(prepared.validation.checks) || hashDocument(receipt.warnings) !== hashDocument(prepared.validation.warnings)
+      || hashDocument(receipt.comparisons) !== hashDocument(prepared.validation.comparisons)
+      || hashDocument(receipt.reconstructedPreview) !== hashDocument(prepared.validation.reconstructedPreview)))
     return fail("PLATFORM_RESPONSE_INVALID", "Receipt does not describe this candidate's validated publication.");
   return receipt;
 }

@@ -6,7 +6,7 @@
 
 在平台 `/ui-design/connect` 为有权编辑的设计建立 `design.read` / `design.submit` 连接，使用一次性配对码在本地运行 `c2c ui-design connect --server <平台地址> --pairing-code <配对码> -w <工作区>`。端点只由本地配置决定；MCP 参数不能重定向凭据。Windows 凭据使用当前用户 DPAPI，模型只得到连接范围和过期时间。
 
-1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.4.0、在线协议 1.2.0；作者格式仍为 0.1.0。
+1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.5.0、在线协议 1.3.0；作者格式仍为 0.1.0。
 2. `ui_design_context` 获取当前原生序号/hash 和标准修订，再用 `ui_design_checkpoint` 固定准确状态。
 3. `ui_design_submission_begin` 绑定 checkpoint、base revision 与稳定 request UUID，返回 submission ID。为完整文件清单写入这个 ID，保持正文/清单/文件摘要一致。
 4. 在工作区完成原图、采用定稿、PNG 素材、实际字体、完整预览、总览与来源记录。`ui_design_precheck` 可检查本地结构和字节，不能替代平台验证或发布。
@@ -15,13 +15,15 @@
 
 调用 `ui_design_submit`，传入 design ID、submission ID、document/manifest 路径及包目录。插件先核对整个包，再补传缺失文件；平台完整解码、冻结依赖、原生 bridge 往返和投影、独立重建及图片差异测量后，条件导入原生历史并提交标准修订。
 
-需要分步处理时使用 `ui_design_submission_upload`、`ui_design_submission_validate`、`ui_design_submission_commit`。验证 ID 固定到该候选的正文、清单和 bridge。当前导入要求原生活动编辑通道关闭，且原生 checkpoint、标准 head 未变化；未发布原生修改不会被覆盖。
+需要分步处理时使用 `ui_design_submission_upload`、`ui_design_submission_validate`、`ui_design_submission_prepare_commit`、`ui_design_submission_commit`。候选验证 ID 固定 N 的正文、清单和 bridge。准备提交会读取当前原生文档 C，与已发布基线 B 和 N 做有限三方合并；固定布局下，一侧只替换同尺寸、同裁切资源内容，另一侧只改变场景节点位置时可以合并。文字、尺寸、九宫格、组件定义/覆盖、未知扩展等并发变化没有自动合并规则，会返回定位冲突。
 
-成功结果必须是共享协议校验通过的持久 `COMMITTED` 回执，包含准确正文/清单摘要、标准修订、原生 checkpoint 与重建图。`BUNDLE_STORED`、本地预检和验证 PASS 都不代表正式保存。使用 `ui_design_submission_status` 恢复未知结果；重复相同 submission/validation 身份返回原回执，不产生第二次导入。取消只允许未提交候选，并保留已经接收的文件。
+准备结果包含 `preparationId`、当前标准 head/原生 checkpoint，以及最终文档 M 的独立报告与重建图。平台重新解码 M 的全部依赖、核对 manifest、原生往返和渲染；N 的报告与生产者预览保留。可把准备 ID 传入 commit 固定本次选择；省略时插件先准备再提交。正式导入要求原生活动编辑通道关闭，最终事务再次核对权限、原生 checkpoint 和标准 head。准备之后若又有编辑，提交会拒绝；重新 prepare，或保留双方版本后修复候选，不能把过时报告用于新 M。
+
+成功结果必须是共享协议校验通过的持久 `COMMITTED` 回执，分别记录 submitted N 与 committed M 的正文/清单摘要、最终校验 ID、标准修订、原生 checkpoint 与重建图。`BUNDLE_STORED`、本地预检和验证 PASS 都不代表正式保存。使用 `ui_design_submission_status` 恢复未知结果；重复相同 submission/validation/preparation 身份返回原回执，即使之后已有新编辑也不再导入。取消只允许未提交候选，并保留已经接收的文件。
 
 当前断点恢复粒度为固定 1 MiB 块（末块可短），进度来自服务端 nextOffset；重复块必须同偏移、长度和摘要。单文件上限 64 MiB、整包 256 MiB、最多 2048 项；接收中数据每 actor 256 MiB、全局 768 MiB，首块起七天过期后需新建 submission。完成和取消会释放接收中的块字节。发生版本冲突时读取新 context，保留原候选与原生草稿，不能自动换基线并声称旧候选仍已验证。
 
-错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1 正式回执仍能通过固定旧协议读取。
+错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；合并冲突还尽量提供稳定 nodeId/assetId，按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1/1.2 正式回执仍能通过固定旧协议读取。
 
 ## 原生编辑后的再次发布
 
@@ -35,4 +37,4 @@
 
 真实插件完整提交、原界面中文修改/Undo/Redo、再次发布和重开已验证。报告仍明确 `candidateNativeEditorRun=false`、`visualReview=NOT_REVIEWED`、`targetExport=NOT_EVALUATED`；该系统场景不代表每个候选都运行过原生窗口，也不代表人工视觉审核或 PSD/FGUI 导出成功。生产者图片与重建图的差异是可查的测量和警告。
 
-当前仅支持一个标准管理页面及首次严格空页导入。有限并发合并、标准历史的完整生命周期和目标导出继续实施。详见[平台发布证据](https://github.com/bambom/GameMagicTool/blob/800abb6c037b4d90dcc80cac0e8495b12135aa23/docs/ui-design/PUBLICATION-INTEGRATION.md)。
+当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史的完整生命周期和平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。
