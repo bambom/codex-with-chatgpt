@@ -4,13 +4,23 @@
 
 ## 当前复制开发架构（2026-10-11）
 
-用户进一步明确：原代码不动，完整复制 AI 图层编辑器和服务端的可用实现形成新系统，以完整原客户端功能与业务逻辑为基线做增量需求；图层显示、选择、编辑、通信、存储只是重点例子，不能只保留这一部分。实施依据为[复制架构](ui-design-copy-architecture.zh-CN.md)、[源码调研](ui-design-reuse-research.zh-CN.md)、[主方案](ui-design-platform-integration.zh-CN.md)与[原界面基线](ui-design-editor-baseline.zh-CN.md)。本轮仅更新调研和文档，未施工副本。
+用户进一步明确：原代码不动，完整复制 AI 图层编辑器和服务端的可用实现形成新系统，以完整原客户端功能与业务逻辑为基线做增量需求；图层显示、选择、编辑、通信、存储只是重点例子，不能只保留这一部分。实施依据为[复制架构](ui-design-copy-architecture.zh-CN.md)、[源码调研](ui-design-reuse-research.zh-CN.md)、[主方案](ui-design-platform-integration.zh-CN.md)与[原界面基线](ui-design-editor-baseline.zh-CN.md)。随后用户授权开始实施，已交付下面的固定来源副本与独立构建基线。
 
 产品保留复制来的原生文档/事务/Undo 和 baseline/delta 存储；标准正式修订是确定 native checkpoint 的不可变投影。下文 0.1 契约及插件离线预检仍可用，旧自建标准会话/reducer 只作测试与语义参考，不能强制作为产品唯一作者状态或替换原历史。早期 SQL 绑定原 design_record 的设计未部署，已被新产品独立记录/持久化架构替代；此处不改写已发布 0.1 包或 tarball。
 
 自制预览界面不符合要求，不作为产品基础。后续顺序是 R0/B0 完整来源/运行基线 → B1 原界面/图层/选择副本 → B2 原编辑/通信/保存重开 → P1a/P2a 标准桥接与发布 → 完整标准业务、P3 在线插件、P4 导出。历史测试结果不能转记为副本验收通过。
 
-## 本批交付
+## 完整源码复制的第一批实施
+
+平台提交 [`b640cf7a00`](https://github.com/bambom/GameMagicTool/commit/b640cf7a0062def34d056674a66a37fc192e65cf) 固定来源提交 `fc7af75e`，新增 16,857 个客户端构建输入、766 个服务端来源文件，以及私有构建/检查/导入工具。复制整个登记业务与程序目录，不按首屏或新增需求裁剪。详细范围、命令和余项见 [源码与构建基线](https://github.com/bambom/GameMagicTool/blob/b640cf7a0062def34d056674a66a37fc192e65cf/docs/ui-design/SOURCE-COPY-BASELINE.md)。
+
+副本完整构建成功；459 个业务模块、3 个共享包、23 个 profile 保留。15,251 条程序的源码/编译器/输出通过缓存校验，0 构建失败，10 条上游待恢复记录仍保留；这不是无缓存冷构建。22 个入口脚本、1 个 Worker 的静态绑定及 457 个宿主文件哈希检查通过，新增 Node 5 项、Python 2 项定向测试通过。
+
+服务端 336 个待私有化候选与 80 个公共设施参考尚未接入生产 source set；原表迁移只作参考，未执行。产品入口在私有后端接好前拒绝启动，避免回退到原账号/服务器。完整原功能运行对照、真实界面、通信/保存重开仍未通过，不能把本批标记为 B0/B1/B2 全部完成。
+
+插件代码、0.1 契约包和离线预检此次没有变化；未重复运行无关插件测试，也未切换正在运行的插件。下一批先完成原生产品私有宿主/后端与完整功能闭环，再推进标准桥接和 P3 在线授权、提交、回执。
+
+## 首批契约与插件交付
 
 平台实现了 [0.1.0 契约包](https://github.com/bambom/GameMagicTool/tree/5bd104070dcc3e7e3ab6583eb285e874e4bf08ba/packages/ui-design-contract)，插件直接消费同一源提交的固定 npm tarball，没有独立维护一份 Schema。源提交、规范摘要和归档 SHA-256 见 [provenance](../vendor/ui-design-contract.provenance.json)，依赖完整性固定在 `pnpm-lock.yaml`。
 
