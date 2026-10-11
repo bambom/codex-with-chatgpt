@@ -1,5 +1,7 @@
 # UI 设计平台：复制 AI 图层编辑器客户端与服务器的实施方案
 
+2026-10-12 最新桥接进展：平台提交 [`880ef1e32c`](https://github.com/bambom/GameMagicTool/commit/880ef1e32c5983e45bf5f037aecb59158d6cb896) 已完成真实文件到原生编辑器、保存/撤销/重做/重开及标准回写闭环。完整样例 8 文件、28 个布局条目、3 个真实图片绑定和 1 个字体绑定通过；中文标题编辑后固定框仍为 180×32，组件/实例/状态/扩展保持，实际标准预览接口返回 640×480 PNG。私有 ESM 源码覆盖层保持原生排版事务，原上游源码不变。隔离桥接集成、4 项投影、4 项原生预览及 2 项适配检查通过，临时数据库已移除。见[桥接记录与限制](https://github.com/bambom/GameMagicTool/blob/880ef1e32c5983e45bf5f037aecb59158d6cb896/docs/ui-design/BRIDGE-INTEGRATION.md)。正式原生导入接口、完整依赖冻结、标准修订与持久回执继续实施；不能把本批准备或原生 ACK 报告为正式提交。
+
 2026-10-12 标准主线进展：平台提交 [`fd2ed9a897`](https://github.com/bambom/GameMagicTool/commit/fd2ed9a897762c5cc12d4feae93be39d9653950c) 已实现完整候选在线接收：以 request UUID 幂等开始，固定当前 native checkpoint 与标准版本，不可变绑定文档/清单，按 hash 和长度保存真实文件，查询逐文件状态并支持取消。插件新增在线协议及 submission begin/status/upload/cancel 工具；上传只读取工作区文件，先全包校验，再补传缺失文件。共享包升级为 0.2.0，作者标准 0.1.0 摘要不变，独立在线接收协议为 1.0.0。59 项共享契约检查、14 项插件检查、2 项真实接收集成和 3 项标准在线集成通过；真实插件 8 文件上传、1+7 续传及重复零上传已有证据。BUNDLE_STORED 仅表示字节留存，`submitted=false`、`published=false`；原生桥接、视觉校验、正式提交和回执继续实施。见[在线接入与证据](https://github.com/bambom/GameMagicTool/blob/fd2ed9a897762c5cc12d4feae93be39d9653950c/docs/ui-design/STANDARD-INTEGRATION.md)。停止独立基线推进。
 
 ## 当前优先级（2026-10-12 用户修订）
