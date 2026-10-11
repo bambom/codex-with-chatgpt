@@ -6,7 +6,7 @@
 
 在平台 `/ui-design/connect` 为有权编辑的设计建立 `design.read` / `design.submit` 连接，使用一次性配对码在本地运行 `c2c ui-design connect --server <平台地址> --pairing-code <配对码> -w <工作区>`。端点只由本地配置决定；MCP 参数不能重定向凭据。Windows 凭据使用当前用户 DPAPI，模型只得到连接范围和过期时间。
 
-1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.5.0、在线协议 1.3.0；作者格式仍为 0.1.0。
+1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.6.0、在线协议 1.4.0；作者格式仍为 0.1.0。
 2. `ui_design_context` 获取当前原生序号/hash 和标准修订，再用 `ui_design_checkpoint` 固定准确状态。
 3. `ui_design_submission_begin` 绑定 checkpoint、base revision 与稳定 request UUID，返回 submission ID。为完整文件清单写入这个 ID，保持正文/清单/文件摘要一致。
 4. 在工作区完成原图、采用定稿、PNG 素材、实际字体、完整预览、总览与来源记录。`ui_design_precheck` 可检查本地结构和字节，不能替代平台验证或发布。
@@ -23,7 +23,7 @@
 
 当前断点恢复粒度为固定 1 MiB 块（末块可短），进度来自服务端 nextOffset；重复块必须同偏移、长度和摘要。单文件上限 64 MiB、整包 256 MiB、最多 2048 项；接收中数据每 actor 256 MiB、全局 768 MiB，首块起七天过期后需新建 submission。完成和取消会释放接收中的块字节。发生版本冲突时读取新 context，保留原候选与原生草稿，不能自动换基线并声称旧候选仍已验证。
 
-错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；合并冲突还尽量提供稳定 nodeId/assetId，按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1/1.2 正式回执仍能通过固定旧协议读取。
+错误 details 包含共享协议验证的 code、JSON Pointer 字段路径、规则、retryAction 和查询身份；合并冲突还尽量提供稳定 nodeId/assetId，按这些信息定位修复。`status.lastError` 为最近一次历史拒绝，并不覆盖当前 state/receipt。更改已绑定候选的正文或文件需新建 submission。旧 1.1/1.2/1.3 正式回执仍能通过固定旧协议读取。
 
 ## 原生编辑后的再次发布
 
@@ -33,8 +33,14 @@
 
 `ui_design_revision` 返回固定正文、清单与回执，并核对内容摘要。清单中的生产者预览与来源文件保留原包身份；当前修订的平台重建图由回执 `reconstructedPreview` / `previewPath` 标识。共享授权实时检查，贡献者撤权不会删除已经冻结到设计 owner 的依赖。
 
+## 复制与历史
+
+现有原生完整设计复制保留已发布标准历史和当前未发布原生草稿，生成独立设计/原生身份、固定素材和设计字体。`DESIGN_COPY` 回执不冒充原插件提交，`copySource` 绑定源回执、内容和归档摘要。源设计撤权或移除后，副本资源和归档继续按副本权限读取。
+
+`ui_design_history` 按修订倒序分页，返回 `nextBefore`；`ui_design_copy_source` 校验对应正式回执、归档摘要和原回执字节摘要后读取原始生产者证据。复制的副本保留祖先记录；待提交私有候选不复制。未知原生修改仍保留在副本草稿中，不假称它们已经通过标准发布。标准设计当前要求完整页集；详情见[平台边界与验证](https://github.com/bambom/GameMagicTool/blob/codex/ui-design-platform/docs/ui-design/COPY-LIFECYCLE.md)。
+
 ## 验证边界
 
 真实插件完整提交、原界面中文修改/Undo/Redo、再次发布和重开已验证。报告仍明确 `candidateNativeEditorRun=false`、`visualReview=NOT_REVIEWED`、`targetExport=NOT_EVALUATED`；该系统场景不代表每个候选都运行过原生窗口，也不代表人工视觉审核或 PSD/FGUI 导出成功。生产者图片与重建图的差异是可查的测量和警告。
 
-当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史的完整生命周期和平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。
+当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史复制、改名、移动、回收/还原及永久业务移除已经验证；定位修复闭环和平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。
