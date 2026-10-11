@@ -1,5 +1,7 @@
 # 独立 UI 设计平台：首批实现
 
+2026-10-11 实施进展：平台提交 [`2186e79f1f`](https://github.com/bambom/GameMagicTool/commit/2186e79f1fb76b481017261cff8d2b7d90a803f5) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，在临时 PostgreSQL 和真实 Electron 中验证文本插入、修改、撤销、重做、逐事务保存确认和重开。143 个继承 REST 控制器全部保留私有映射；34 项单元检查、6 项完整宿主装配检查通过。七个原侧栏入口已观察，但部分面板仍有缺失资源或服务错误；固定 editor runtime 的完整字面依赖对照发现原采集包遗漏 3,569 个资源，正在显式补采。**B2 完整原功能、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/2186e79f1fb76b481017261cff8d2b7d90a803f5/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
+
 日期：2026-10-11。平台和插件分别使用独立 `codex/ui-design-platform` 分支；本目录为 `C:\Users\bambo\codex-with-chatgpt-ui-design`，没有切换正在运行插件的主 checkout。
 
 ## 当前复制开发架构（2026-10-11）

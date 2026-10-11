@@ -1,8 +1,10 @@
 # UI 设计平台：复制 AI 图层编辑器客户端与服务器的实施方案
 
+2026-10-11 实施进展：平台提交 [`2186e79f1f`](https://github.com/bambom/GameMagicTool/commit/2186e79f1fb76b481017261cff8d2b7d90a803f5) 已接通完整原生壳与私有 `/ui-design` HTTP/WebSocket，在临时 PostgreSQL 和真实 Electron 中验证文本插入、修改、撤销、重做、逐事务保存确认和重开。143 个继承 REST 控制器全部保留私有映射；34 项单元检查、6 项完整宿主装配检查通过。七个原侧栏入口已观察，但部分面板仍有缺失资源或服务错误；固定 editor runtime 的完整字面依赖对照发现原采集包遗漏 3,569 个资源，正在显式补采。**B2 完整原功能、JVM 重启恢复、标准 checkpoint 发布、GPT 在线链和导出仍未验收。** 原源码、现用服务和现用数据库保持不动。详情见[运行证据与功能对照](https://github.com/bambom/GameMagicTool/blob/2186e79f1fb76b481017261cff8d2b7d90a803f5/docs/ui-design/NATIVE-RUNTIME-ACCEPTANCE.md)。
+
 初稿：2026-10-10。当前修订：2026-10-11，按用户“原代码不动、复制可用实现后在新系统二次开发”的要求完善客户端与服务器架构。
 
-本轮已做[源码与服务端调研](ui-design-reuse-research.zh-CN.md)，形成[复制式二次开发架构](ui-design-copy-architecture.zh-CN.md)与[来源观察清单](ui-design-source-audit-2026-10-11.json)。P0-A 契约、插件离线规范/预检和实验会话已有实现；自制预览未被接受，旧实验会话/历史不作为产品基础。此次没有实施副本系统。
+本轮已做[源码与服务端调研](ui-design-reuse-research.zh-CN.md)，形成[复制式二次开发架构](ui-design-copy-architecture.zh-CN.md)与[来源观察清单](ui-design-source-audit-2026-10-11.json)。P0-A 契约、插件离线规范/预检和实验会话已有实现；自制预览未被接受，旧实验会话/历史不作为产品基础。该次静态调研没有实施副本系统；随后实施结果见本文开头的最新进展。
 
 执行顺序为 R0/B0 来源与依赖 → B1 原界面/图层/选择副本 → B2 复制通信和持久化闭环 → P1a/P2a 标准桥接与正式修订 → 完整接收、GPT 与导出。[执行交接](ui-design-platform-handoff.zh-CN.md)同步本次架构；旧 SQL、标准 session 替换原生历史等设计不再作为实施依据。
 
@@ -442,6 +444,6 @@ P0-A 0.1 契约已实现，保留其校验和样例；旧 SQL/会话架构不能
 
 **本轮完成只读源码调研、前后端架构和计划更新。** 54 文件来源观察、混合源码状态、实际发布资源、图层/选择线索和服务端持久化链已有证据，详见[调研](ui-design-reuse-research.zh-CN.md)。完整组件/CSS/依赖闭包、原应用运行基线及 B1/B2 副本验收仍未完成，不能把静态发现当作已运行成功。
 
-既有契约与插件离线预检保留；自建标准会话仅为实验参考，自制预览未被接受。用户随后授权实施，已在平台提交 [`b640cf7a00`](https://github.com/bambom/GameMagicTool/commit/b640cf7a0062def34d056674a66a37fc192e65cf) 固定完整登记客户端来源及服务端来源参考，完成独立完整构建与静态入口/Worker 绑定检查。详情见 [源码与构建基线](https://github.com/bambom/GameMagicTool/blob/b640cf7a0062def34d056674a66a37fc192e65cf/docs/ui-design/SOURCE-COPY-BASELINE.md)。完整原功能运行对照、私有后端与真实保存重开尚未通过；没有启动业务应用、改数据库或替换运行插件。下一步补齐运行基线并接私有宿主/后端，不能把来源和构建通过计为 B0/B1/B2 全通过。
+既有契约与插件离线预检保留；自建标准会话仅为实验参考，自制预览未被接受。用户随后授权实施，已在平台提交 [`b640cf7a00`](https://github.com/bambom/GameMagicTool/commit/b640cf7a0062def34d056674a66a37fc192e65cf) 固定完整登记客户端来源及服务端来源参考，完成独立完整构建与静态入口/Worker 绑定检查。详情见 [源码与构建基线](https://github.com/bambom/GameMagicTool/blob/b640cf7a0062def34d056674a66a37fc192e65cf/docs/ui-design/SOURCE-COPY-BASELINE.md)。这是首次复制阶段的结果；后续私有后端和文本保存重开已通过，完整原功能及依赖仍在对照。本文开头记录最新进展，不能把关键路径通过计为 B0/B1/B2 全通过。
 
 关联背景：[统一作者标准](ui-canonical-format-proposal.zh-CN.md)；[未来 FGUI 目标回写研究](ui-roundtrip-sync-proposal.zh-CN.md)。后者涉及的独立 FGUI 编辑器源码仅是历史目标研究，不是本次新窗口的开发基础。
