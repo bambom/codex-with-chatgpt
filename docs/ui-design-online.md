@@ -1,12 +1,12 @@
 # UI 设计平台在线提交
 
-这条流程面向独立 UI 设计平台；平台副本沿用原 AI 图层编辑器界面和原生保存链。插件从工作区上传已完成的标准正文、真实素材/字体和证据包，平台验证、保存并发布。现有本地 PSD/FGUI 工具另行保留，平台目标导出仍待实现。
+这条流程面向独立 UI 设计平台；平台副本沿用原 AI 图层编辑器界面和原生保存链。插件从工作区上传已完成的标准正文、真实素材/字体和证据包，平台验证、保存并发布。平台导出从已发布固定修订运行；旧本地作业没有自动改写，显式迁移另行收尾。
 
 ## 连接与准备
 
 在平台 `/ui-design/connect` 为有权编辑的设计建立 `design.read` / `design.submit` 连接，使用一次性配对码在本地运行 `c2c ui-design connect --server <平台地址> --pairing-code <配对码> -w <工作区>`。端点只由本地配置决定；MCP 参数不能重定向凭据。Windows 凭据使用当前用户 DPAPI，模型只得到连接范围和过期时间。
 
-1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.7.0、在线协议 1.5.0；作者格式仍为 0.1.0。
+1. `ui_design_platform_spec` 和 `ui_design_online_protocol` 核对实际规范、摘要与能力。共享包 0.8.0、在线协议 1.6.0；作者格式仍为 0.1.0。
 2. `ui_design_context` 获取当前原生序号/hash 和标准修订，再用 `ui_design_checkpoint` 固定准确状态。
 3. `ui_design_submission_begin` 绑定 checkpoint、base revision 与稳定 request UUID，返回 submission ID。为完整文件清单写入这个 ID，保持正文/清单/文件摘要一致。
 4. 在工作区完成原图、采用定稿、PNG 素材、实际字体、完整预览、总览与来源记录。`ui_design_precheck` 可检查本地结构和字节，不能替代平台验证或发布。
@@ -44,3 +44,11 @@
 真实插件完整提交、原界面中文修改/Undo/Redo、再次发布和重开已验证。报告仍明确 `candidateNativeEditorRun=false`、`visualReview=NOT_REVIEWED`、`targetExport=NOT_EVALUATED`；该系统场景不代表每个候选都运行过原生窗口，也不代表人工视觉审核或 PSD/FGUI 导出成功。生产者图片与重建图的差异是可查的测量和警告。
 
 当前仅支持一个标准管理页面及首次严格空页导入。有限合并已通过真实编辑器移动、Undo/Redo、关闭通道、插件提交和重开；它不代表任意并发编辑都可合并。标准历史复制、改名、移动、回收/还原及永久业务移除已经验证；定位修复闭环已通过跨进程真实插件验证；平台目标导出继续实施。详见[平台合并证据](https://github.com/bambom/GameMagicTool/blob/778d4ced4dd98c39bb2a268951020c2856607317/docs/ui-design/MERGE-INTEGRATION.md)。
+
+## 平台固定修订导出
+
+`ui_design_export_targets` 读取管理员从实际源码冻结的目标及 exporter 身份；`ui_design_export_begin` 指定 revision、稳定 request UUID 和 PSD/FGUI 格式，FGUI 再选择 target ID。平台读取该修订的固定资源，随后发生的原生编辑或新发布不改变任务输入。导出需要 design.read；创建/操作任务和写本地文件另需 workspace.write。
+
+用 `ui_design_exports` 读取任务状态、独立尝试、定位诊断、产物清单和报告。`ui_design_export_action` 允许创建者重试失败任务、创建者或 owner 取消未完成任务。`ui_design_export_download` 按 index 下载到新的工作区路径，校验长度/hash 和报告身份；已有文件不会覆盖。
+
+SUCCEEDED 确认文件验证和保全，不意味着 Photoshop 或官方 FairyGUI 桌面编辑器通过。报告分别给出 fileValidation、editorImport、runtimeInteraction。PSD 文字为独立栅格层，标准正文中仍保留可编辑文本；FGUI 源码保留原生控件、组件及状态，业务回调未绑定。无配置适配器时原生两项为 not_verified。实际目标检查范围、整数坐标/步长 1 等限制、租约和两 JVM 恢复证据见[平台导出记录](https://github.com/bambom/GameMagicTool/blob/d7b14d888a291e2f7c1cc41e8e51e2d936064c21/docs/ui-design/FIXED-REVISION-EXPORTS.md)。

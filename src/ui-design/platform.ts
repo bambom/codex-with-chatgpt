@@ -203,3 +203,33 @@ export async function platformIntakeRequest(workspace: Workspace, design: string
   const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");
   return request(credential.server, "/designs/" + design + suffix, method, body, token);
 }
+
+/** Export authorization is design.read: an export never edits the design. */
+export async function platformExportRequest(workspace: Workspace, design: string, suffix: string, method: "GET" | "POST" | "DELETE", body?: unknown) {
+  const uuid = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+  const allowed = method === "GET" ? new RegExp(`^/exports(?:/targets|/${uuid}|\\?revision=[0-9]{1,10})?$`)
+    : method === "DELETE" ? new RegExp(`^/exports/${uuid}$`) : new RegExp(`^/exports(?:/${uuid}/retry)?$`);
+  if (!allowed.test(suffix)) return fail("INVALID_EXPORT_ROUTE", "Invalid export operation.");
+  const { credential, token } = await connected(workspace, design);
+  return request(credential.server, "/designs/" + design + suffix, method, body, token);
+}
+
+/** Stream only a fixed export file. The caller verifies identity/hash before publishing the local file. */
+export async function streamPlatformExport(workspace: Workspace, design: string, job: string, index: number, expected: { byteLength: number; sha256: string; mediaType: string }, consume: (chunk: Uint8Array) => Promise<void>) {
+  z.string().uuid().parse(job); z.number().int().min(0).max(31).parse(index);
+  if (!Number.isSafeInteger(expected.byteLength) || expected.byteLength < 1 || expected.byteLength > 268435456) return fail("EXPORT_FILE_LIMIT", "Export file exceeds the download limit.");
+  const { credential, token } = await connected(workspace, design);
+  let response: Response;
+  try { response = await fetch(`${credential.server}/api/v1/designs/${design}/exports/${job}/files/${index}`, { headers: { Authorization: "Bearer " + token, "X-UI-Design-Transport": "ui-design-native-1" }, redirect: "error", credentials: "omit", signal: AbortSignal.timeout(120000) }); }
+  catch { return fail("PLATFORM_UNREACHABLE", "Export download did not complete."); }
+  if (!response.ok) { await response.body?.cancel(); return fail("PLATFORM_HTTP_" + response.status, "Export download is unavailable to this connection."); }
+  if (response.headers.get("x-content-sha256") !== expected.sha256 || response.headers.get("content-type")?.split(";")[0] !== expected.mediaType) {
+    await response.body?.cancel(); return fail("EXPORT_FILE_CHANGED", "Export response metadata differs from the retained report.");
+  }
+  const reader = response.body?.getReader(); if (!reader) return fail("PLATFORM_RESPONSE_INVALID", "Export download is empty.");
+  let count = 0;
+  try { for (;;) { const { done, value } = await reader.read(); if (done) break; count += value.byteLength;
+    if (count > expected.byteLength) return fail("EXPORT_FILE_CHANGED", "Export length differs from the retained report."); await consume(value);
+  } if (count !== expected.byteLength) return fail("EXPORT_FILE_CHANGED", "Export download is incomplete."); }
+  finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+}
