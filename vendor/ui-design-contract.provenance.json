@@ -1,16 +1,16 @@
 {
   "name": "@magicgamestudio/ui-design-contract",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "sourceRepository": "https://github.com/bambom/GameMagicTool.git",
-  "sourceCommit": "d7b14d888a291e2f7c1cc41e8e51e2d936064c21",
+  "sourceCommit": "8e8f25259cfed2c0af1d25f6d305f11825797d5c",
   "sourcePath": "packages/ui-design-contract",
   "sourceBranch": "codex/ui-design-platform",
   "specDigest": "e53fa79ee947760f5c18631dea8d1cd12544715620309872a7702f97e55d301a",
-  "tarball": "magicgamestudio-ui-design-contract-0.8.0.tgz",
-  "tarballSha256": "04ccc8fc3a13b2f67ebd1fe09ae489aa67ecee2001acef758877a7828b3ad399",
-  "build": "Shared publication/legacy checks 8 passed, export identity 1 passed; plugin focused checks 17 passed; worker semantic mapping checks 2 passed. Four distinct PostgreSQL export cases passed; affected native verification/transaction cases passed after bounded Windows path and runtime-pin fixes. Two separate JVMs recovered an abandoned export. Real plugin read-only share connection queued r1 while r2 was published, then a second process downloaded and verified 10 PSD/FGUI/evidence files. Actual configured source workbench and 9 runtime interactions passed. npm pack --ignore-scripts; pnpm add --offline --ignore-scripts.",
+  "tarball": "magicgamestudio-ui-design-contract-0.9.0.tgz",
+  "tarballSha256": "0eaa22de06826cfbe582cf9a1b13f813fbec62189853f34ec589d60f6c3fff9a",
+  "build": "Shared publication checks 9 passed and export identity 1 passed; worker mapping 2 passed; plugin focused checks 22 passed, affected local 5 rerun after fixed font selection passed. Disposable PostgreSQL local-preparation run 14e48006a5e1 passed: three plugin processes prepared, reconstructed, formally published r1 and downloaded five files with preserved native IDs. Actual configured source-workbench open/save/reopen/render passed; no-control fixture runtime interaction remains not_verified. npm pack --ignore-scripts; pnpm add --offline --ignore-scripts.",
   "distribution": "Vendored immutable npm tarball pinned by pnpm-lock.yaml integrity; not published to a public registry",
   "runtimeDeployment": "Not deployed to the running plugin",
-  "onlineProtocolVersion": "1.6.0",
-  "onlineDigest": "a84301dfe26723e224ba184d412c96b34be20c9a2140efa491ef1981ff3ffb9a"
+  "onlineProtocolVersion": "1.7.0",
+  "onlineDigest": "585bc9e0975da61311803152d480669c1b02fbac83f766525720d734eb37b02e"
 }

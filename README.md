@@ -12,24 +12,19 @@ ChatGPT visual understanding of connector image responses remains unverified.
 The review workflow below describes the default read-only mode; separately
 authorized tools also support the UI production workflow described next.
 
-## UI production from ChatGPT
+## UI design from ChatGPT
 
-Use the existing workspace plugin to turn an approved UI design and semantic
-layout into layered PSD, PNG asset ZIPs, native FairyGUI source, previews, and
-validation reports. Start with `ui_workflow_info` for capabilities, the exact
-scene schema, and the bundled `ui-production` skill. Import original files or
-upload hash-checked chunks; inspect the real FairyGUI target before exporting.
+Read `ui_design_spec` and the live platform specification, transfer real assets,
+then use `ui_design_prepare` and `ui_design_reconstruct` to create a recoverable
+canonical candidate and complete PNG evidence. `ui_design_submit` sends the
+exact bundle to the platform and returns its verified publication receipt.
+The platform exports PSD/FairyGUI from a fixed published revision; the plugin
+verifies downloads into new workspace paths.
 
-Jobs persist on the bridge computer. The default output is
-`<workspace>/generated/ui-deliveries/`. To use a Windows directory, configure a
-named destination locally with `c2c ui destination add --name game-ui --path
-"E:\UI-Deliveries" -w <workspace>`, then select `game-ui` in ChatGPT.
-The plugin builds and transfers files; ChatGPT performs the image generation and
-semantic analysis. Register an existing editor/runtime adapter locally with
-`c2c ui validator add`; ChatGPT can then run `ui_validate_native` by its configured
-ID. Static, editor-import, and runtime-interaction checks remain separate, with
-unavailable checks marked unverified. See the complete
-[UI production workflow](docs/ui-workflow.md).
+Legacy Scene jobs are read-only and have an explicit migration tool. Original
+files and previously delivered native IDs are preserved within the supported
+semantic intersection. See [the online workflow](docs/ui-design-online.md) and
+[local preparation and migration](docs/ui-design-local.md).
 
 > ChatGPT thinks. Codex works.
 > ChatGPT 负责思考，Codex 负责干活。

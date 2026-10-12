@@ -6,6 +6,7 @@ import { addDestination, listDestinations, removeDestination } from "../ui/desti
 import { addNativeAdapter, listNativeAdapters, removeNativeAdapter, runNativeValidation } from "../ui/native.js";
 import {
   UI_LIMITS, workflowCapabilities, createJob, getJob, listJobs, listArtifacts,
+  UiWorkflowError,
   importFile, importLocalFile, abortUpload, inspectTarget, setScene, buildJob, deliverJob,
 } from "../ui/workflow.js";
 import { getWorkflowGuidance } from "../ui/tools.js";
@@ -49,6 +50,7 @@ function output(value: unknown, json: boolean): void {
 async function run(command: Command, operation: (workspace: Workspace, options: CliOptions) => unknown | Promise<unknown>): Promise<void> {
   const options = command.optsWithGlobals() as CliOptions;
   try {
+    if(["create","import","import-local","abort-upload","inspect-target","set-scene","build","validate-native","deliver"].includes(command.name()))throw new UiWorkflowError("LEGACY_READ_ONLY","Legacy jobs are read-only. Use c2c ui-design migrate, prepare and reconstruct; PSD/FGUI export now belongs to the platform.");
     const workspace = new Workspace(path.resolve(options.workspace ?? process.cwd()));
     output(await operation(workspace, options), options.json === true);
   } catch (error) {

@@ -1,5 +1,7 @@
 # UI production in the existing ChatGPT plugin
 
+当前工作流已切换到[平台标准在线提交](ui-design-online.md)及[本地准备/显式迁移](ui-design-local.md)。下文为旧 Scene 工作流历史说明；旧作业可读，创建、修改、本地构建和交付入口返回 `LEGACY_READ_ONLY`。不会自动重写旧文件。
+
 For the independent UI design platform, the first implemented preparation tools are `ui_design_spec` and `ui_design_precheck`. They consume the platform-owned contract and need no FGUI project. See [implementation status and limitations](ui-design-contract-progress.zh-CN.md). A local precheck PASS is not a platform save.
 
 The connected **Codex with ChatGPT** plugin can assemble a game UI into real layered PSD, PNG assets, FairyGUI editor source XML, previews, and validation reports. Jobs, uploaded materials, revisions, and results persist on the computer running the bridge. The existing workspace connection and OAuth scopes continue to apply.

@@ -103,10 +103,11 @@ function validateRole(role: InputRole): void {
 export function workflowCapabilities() {
   return {
     schemaVersion: 1,
-    description: "ChatGPT prepares a complete design, assets and semantic scene; this local plugin persists jobs and builds verifiable PSD, PNG and native FGUI source files.",
+    description: "Legacy Scene jobs are read-only compatibility sources. Use ui_design_prepare/reconstruct/submit for new standard designs and platform revision exports for PSD/FGUI.",
+    readOnly: true,
     limits: UI_LIMITS,
-    stages: ["inspect_target", "design", "assets", "semantics_and_layout", "build", "static_validation", "native_validation", "deliver"],
-    outputFormats: ["layered PSD", "RGBA PNG assets ZIP", "FGUI editor source XML ZIP", "previews", "semantic/layout/font/binding manifests"],
+    stages: ["read_legacy_job", "inspect_migration", "explicit_migration", "standard_prepare", "standard_reconstruct", "online_submit", "platform_export"],
+    historicalOutputFormats: ["layered PSD", "RGBA PNG assets ZIP", "FGUI editor source XML ZIP", "previews", "semantic/layout/font/binding manifests"],
     transfer: "Import a workspace file or send SHA-256-checked binary chunks. A cloud attachment path is not a path on this computer.",
     destinations: "The workspace destination is built in; additional computer directories are registered with the local CLI.",
     generation: "Image analysis, image generation and reconstruction are performed by the ChatGPT host. The MCP server does not invoke a paid model API or continue AI work after the chat stops.",
