@@ -1,5 +1,39 @@
 # Codex with ChatGPT
 
+## UI Design fixed server connection
+
+One ordinary ChatGPT web plugin retains all 13 base workspace tools and adds
+two design business tools: split an image into standard layers, or modify an existing standard design.
+ChatGPT web produces all images, layers and result files; the plugin transports,
+validates and saves them. See the [implementation plan and verification status](docs/ui-design-web-chat.zh-CN.md).
+Client-chat forwarding and embedding ChatGPT are deferred.
+
+Ask Codex to connect ChatGPT; it performs the browser setup, pairing, recovery and
+an actual read-only tool check. The user handles login and required account
+consent. The maintained [AI connection procedure](skill/references/ui-design-chatgpt.md)
+uses the existing desktop binding and fixed server endpoint. It does not require
+an OpenAI model API key or automatically create OpenAI Platform credentials.
+The commands below are implementation details for Codex and administrators.
+
+The UI Design fork can route MCP through the existing platform server. Its outbound worker needs no public local port or temporary tunnel. The platform keeps the device identity, catalog, OAuth grants and request outcomes in PostgreSQL; a network failure never rewrites the installed connector URL or deletes the local credential.
+
+The desktop client's **连接插件** page now offers a native workspace picker, scoped design authorization, immediate connection, reauthorization, and disconnection. Local product setup runs `node tools/ui-design/configure-relay-runtime.mjs --plugin-root PLUGIN_DIRECTORY` in the product checkout after building this fork. The client sends a bounded JSON request to `bin/ui-design-desktop.js` over private stdin; pairing codes never appear in process arguments. This entry is not an MCP tool. Reauthorization retains the prior credential until exchange succeeds and preserves interrupted requests without replay. The saved Node/plugin installation must remain present; a standalone installer is not included. The CLI workflow below remains available for development and browser-only management.
+
+After the platform administrator configures `app.ui-design.relay.public-base-url` and applies V13–V15, choose the allowed design in the client's **连接插件** page and use its one-time platform code:
+
+```powershell
+node bin/c2c.js ui-design connect --server https://your-platform.example --pairing-code CODE --workspace PROJECT
+node bin/c2c.js ui-design relay run --workspace PROJECT
+# In a second terminal, obtain the MCP URL and five-minute OAuth connection code:
+node bin/c2c.js ui-design relay pair --workspace PROJECT
+```
+
+Add that MCP URL to ChatGPT with OAuth, approve the requested read/write permissions, and enter the returned connection code. To attach the worker lifecycle to the desktop client, run `ui-design relay configure-client --profile CLIENT_PROFILE --workspace PROJECT`, then restart the client. `CLIENT_PROFILE` is the product profile root containing `userData`; the local-runtime profile is `<instance directory>/desktop-profile`. This saves only executable/workspace/state paths and the pinned platform address. Credentials remain in protected workspace storage. The saved Node executable and plugin installation must remain available; the client supervisor restarts the worker after unexpected exits and shows its state in **插件连接状态**. No OS service or system startup entry is installed.
+
+Use `ui-design relay status` for live server presence plus local worker state. Platform access credentials renew automatically; old grants without a refresh credential need one new authorization. `ui-design disconnect` revokes remotely. If that cannot succeed because the old authorization expired or was revoked, `ui-design forget` explicitly removes only its local credential and reports `revoked: false`; revoke it in the platform too when applicable. Ordinary connection errors preserve all credentials and configuration. Reauthorizing the same account and workspace preserves the device MCP URL, revokes the superseded platform grant and old ChatGPT grant, and requires fresh app consent without a new connector address.
+
+Requests are persisted before local execution. A restarted worker never re-executes a request whose outcome is unknown. Poll `ui_design_relay_status` using the returned request UUID, or inspect the original platform submission. A repeated result delivery is accepted only for the same lease and identical result. MCP sessions and tool lists remain available during client downtime. A loopback server is supported for development but is not reachable by ChatGPT's web connector; fixed public HTTPS deployment and a final web connection test are separate steps.
+
 ## Fork extensions
 
 This fork is maintained at https://github.com/bambom/codex-with-chatgpt.git.

@@ -41,6 +41,23 @@ describe("gitInfo", () => {
 });
 
 describe("gitStatus", () => {
+  it("lists files when an untracked workspace is nested inside a repository", () => {
+    const nestedRepo = makeTmpDir("git-untracked-workspace");
+    try {
+      makeGitRepo(nestedRepo);
+      write(nestedRepo, "outside.txt", "outside the workspace\n");
+      write(nestedRepo, "workspace/check.txt", "workspace change\n");
+      write(nestedRepo, "workspace/.env", "SECRET=not-for-tools\n");
+
+      const status = gitStatus(path.join(nestedRepo, "workspace"));
+      expect(status.isRepo).toBe(true);
+      expect(status.untracked).toEqual(["check.txt"]);
+      expect(status.hidden.changes).toBe(1);
+    } finally {
+      cleanup(nestedRepo);
+    }
+  });
+
   it("categorizes staged, unstaged and untracked files", () => {
     write(repo, "hello.txt", "modified content\n");
     write(repo, "staged.txt", "new staged file\n");

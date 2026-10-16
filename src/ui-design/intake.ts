@@ -110,9 +110,18 @@ export async function cancelIntake(workspace: Workspace, design: string, submiss
 }
 export interface UploadBundleInput { designId: string; submissionId: string; documentPath: string; manifestPath: string; packageDirectory: string; }
 export async function uploadIntakeBundle(workspace: Workspace, input: UploadBundleInput) {
-  const { designId: design, submissionId: submission } = input;
   const document = assertDocument(parseStrict((await readBounded(workspace, input.documentPath, ONLINE_LIMITS.candidateBytes)).toString("utf8")));
   const manifest = parseStrict((await readBounded(workspace, input.manifestPath, ONLINE_LIMITS.candidateBytes)).toString("utf8")) as unknown as AssetManifest;
+  const directory = input.packageDirectory === "." ? "" : safeRelative(input.packageDirectory) + "/";
+  return uploadIntakeContent(workspace, { ...input, document, manifest },
+    file => readBounded(workspace, directory + file.path, ONLINE_LIMITS.fileBytes, file.byteLength));
+}
+/** Transport adapter for web attachments. It never creates or transforms a producer file. */
+export async function uploadIntakeContent(workspace: Workspace, input: {
+  designId: string; submissionId: string; document: unknown; manifest: AssetManifest;
+}, readFile: (file: AssetManifest["files"][number]) => Promise<Buffer>) {
+  const { designId: design, submissionId: submission, manifest } = input;
+  const document = assertDocument(input.document);
   const current = await intakeStatus(workspace, design, submission);
   if (["CANCELLED", "COMMITTED"].includes(current.state)) return fail("SUBMISSION_IMMUTABLE", "This submission is closed; use its status or start a new candidate.");
   if (document.designId !== design) return fail("DOCUMENT_DESIGN_MISMATCH", "The candidate belongs to a different platform design.");
@@ -121,11 +130,11 @@ export async function uploadIntakeBundle(workspace: Workspace, input: UploadBund
   if (manifest.files.length > ONLINE_LIMITS.files || manifest.files.some(f => f.byteLength > ONLINE_LIMITS.fileBytes)
       || manifest.files.reduce((n, f) => n + f.byteLength, 0) > ONLINE_LIMITS.bundleBytes)
     return fail("BUNDLE_LIMIT", "The bundle exceeds the platform intake limits.");
-  const directory = input.packageDirectory === "." ? "" : safeRelative(input.packageDirectory) + "/";
   // Preflight every path and byte hash before binding. Re-read before transfer to detect later changes.
   for (const file of manifest.files) {
-    const bytes = await readBounded(workspace, directory + file.path, ONLINE_LIMITS.fileBytes, file.byteLength);
-    if (hashBytes(bytes) !== file.sha256) return fail("FILE_HASH", "A bundle file differs from its manifest.");
+    safeRelative(file.path);
+    const bytes = await readFile(file);
+    if (bytes.length !== file.byteLength || hashBytes(bytes) !== file.sha256) return fail("FILE_HASH", "A bundle file differs from its manifest.");
   }
   const documentHash = hashDocument(document), manifestHash = report.assetManifestHash;
   let row = status(await platformIntakeRequest(workspace, design, "/submissions/" + submission + "/candidate", "PUT", { document, manifest }), design, submission);
@@ -140,8 +149,8 @@ export async function uploadIntakeBundle(workspace: Workspace, input: UploadBund
     if (row.files[i]!.stored) { resumed++; continue; }
     const file = manifest.files[i]!;
     if (row.files[i]!.uploadState === "EXPIRED") return fail("UPLOAD_EXPIRED", "This receiving file expired; begin a new submission.");
-    const bytes = await readBounded(workspace, directory + file.path, ONLINE_LIMITS.fileBytes, file.byteLength);
-    if (hashBytes(bytes) !== file.sha256) return fail("FILE_HASH", "A bundle file changed before upload; retained files can be resumed.");
+    const bytes = await readFile(file);
+    if (bytes.length !== file.byteLength || hashBytes(bytes) !== file.sha256) return fail("FILE_HASH", "A bundle file changed before upload; retained files can be resumed.");
     let offset = row.files[i]!.nextOffset; resumedBytes += offset;
     while (offset < bytes.length) {
       const block = bytes.subarray(offset, Math.min(offset + ONLINE_LIMITS.chunkBytes, bytes.length));

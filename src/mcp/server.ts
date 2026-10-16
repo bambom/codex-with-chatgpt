@@ -188,13 +188,13 @@ export interface McpContext {
   logger: Logger;
 }
 
-export function createMcpServer(ctx: McpContext): McpServer {
+export function createMcpServer(ctx: McpContext, options: { includeLegacyUiTools?: boolean; instructions?: string } = {}): McpServer {
   const { workspace } = ctx;
   const server = new McpServer(
     { name: PRODUCT_NAME, version: VERSION },
-    { capabilities: { tools: {} }, instructions:
+    { capabilities: { tools: {} }, instructions: options.instructions ?? (
       "For design-to-PSD/PNG/FGUI requests, call ui_workflow_info action=guidance, then follow the persistent job workflow; image analysis/generation happens in the ChatGPT host. " +
-      "For the independent MagicGameStudio UI design platform, use ui_design_spec and ui_design_precheck for offline preparation. When locally paired, verify ui_design_platform_spec and ui_design_online_protocol; use ui_design_context/checkpoint to pin the native state. Start intake with ui_design_submission_begin; ui_design_submit uploads, validates and conditionally publishes the complete bundle. Individual submission status/upload/validate/commit/cancel tools support recovery. Only the shared-schema-verified persisted COMMITTED receipt confirms publication. Use ui_design_revision to read immutable results and ui_design_publish_native to publish supported saved native edits. BUNDLE_STORED and validation alone are not publication. " + UNTRUSTED_NOTE }
+      "For the independent MagicGameStudio UI design platform, use ui_design_spec and ui_design_precheck for offline preparation. When locally paired, verify ui_design_platform_spec and ui_design_online_protocol; use ui_design_context/checkpoint to pin the native state. Start intake with ui_design_submission_begin; ui_design_submit uploads, validates and conditionally publishes the complete bundle. Individual submission status/upload/validate/commit/cancel tools support recovery. Only the shared-schema-verified persisted COMMITTED receipt confirms publication. Use ui_design_revision to read immutable results and ui_design_publish_native to publish supported saved native edits. BUNDLE_STORED and validation alone are not publication. " + UNTRUSTED_NOTE) }
   );
 
   server.registerTool(
@@ -531,7 +531,9 @@ export function createMcpServer(ctx: McpContext): McpServer {
     }
   );
 
-  registerUiTools(server, ctx);
-  registerUiDesignTools(server, ctx);
+  if (options.includeLegacyUiTools !== false) {
+    registerUiTools(server, ctx);
+    registerUiDesignTools(server, ctx);
+  }
   return server;
 }

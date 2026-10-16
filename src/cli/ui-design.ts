@@ -3,9 +3,10 @@ import { ContractError } from "@magicgamestudio/ui-design-contract";
 import { z } from "zod";
 import { Workspace } from "../workspace/manager.js";
 import { UiWorkflowError } from "../ui/storage.js";
-import { pairPlatform, platformStatus, disconnectPlatform } from "../ui-design/platform.js";
+import { pairPlatform, platformStatus, disconnectPlatform, forgetPlatform } from "../ui-design/platform.js";
 import { prepareLocal, rebindLocal, localStatus, listLocalPreparations, reconstructLocal } from "../ui-design/local.js";
 import { inspectLegacyMigration, migrateLegacy } from "../ui-design/migration.js";
+import { runRelay, relayStatus, relayPair, configureRelayClient } from "../ui-design/relay.js";
 
 /** Endpoint and pairing configuration stay in local CLI authority, outside model tool inputs. */
 export function registerUiDesignCommands(program: Command): void {
@@ -25,6 +26,23 @@ export function registerUiDesignCommands(program: Command): void {
     .action(async (_options, command: Command) => run(command, workspace => platformStatus(workspace)));
   ui.command("disconnect").description("Revoke the platform connection and remove its local credential")
     .action(async (_options, command: Command) => run(command, workspace => disconnectPlatform(workspace)));
+  ui.command("forget").description("Remove only the local credential; does not revoke the server grant")
+    .action(async (_options, command: Command) => run(command, workspace => forgetPlatform(workspace)));
+  const relay = ui.command("relay").description("Use the fixed platform endpoint with an outbound local worker");
+  relay.command("run").description("Keep this workspace connected; reconnect after network loss")
+    .action(async (_options, command: Command) => run(command, async workspace => {
+      const abort = new AbortController();
+      const stop = () => abort.abort(); process.once("SIGINT", stop); process.once("SIGTERM", stop);
+      try { await runRelay(workspace, { signal: abort.signal, onState: state => process.stderr.write(JSON.stringify({ state }) + "\n") }); return { stopped: true }; }
+      finally { process.off("SIGINT", stop); process.off("SIGTERM", stop); }
+    }));
+  relay.command("pair").description("Issue a five-minute code for the ChatGPT OAuth approval page")
+    .action(async (_options, command: Command) => run(command, workspace => relayPair(workspace)));
+  relay.command("status").description("Read local connection state and cloud presence")
+    .action(async (_options, command: Command) => run(command, workspace => relayStatus(workspace)));
+  relay.command("configure-client").description("Save a secret-free auto-start binding in an existing client profile")
+    .requiredOption("--profile <directory>", "Existing UI Design client profile root")
+    .action(async (_options, command: Command) => run(command, (workspace, options) => configureRelayClient(workspace, String(options.profile))));
   ui.command("prepare").description("Preserve canonical inputs locally; no platform upload")
     .option("--document <path>","Canonical authoring JSON").option("--resources <path>","Resource binding JSON array").option("--package <path>","Workspace-relative source directory")
     .option("--source-job <uuid>","Rebind retained inputs into a new preparation")

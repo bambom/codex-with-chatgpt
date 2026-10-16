@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { z } from "zod";
 import { getSpecification, SPEC_DIGEST, SPEC_VERSION, type SpecSection } from "@magicgamestudio/ui-design-contract/spec";
@@ -8,16 +9,19 @@ import { ONLINE_VERSION, ONLINE_DIGEST, onlineProtocol, assertOnlineError, type 
 import type { Workspace } from "../workspace/manager.js";
 import { atomicJson, containedPath, readJson, stateRoot, withLock, UiWorkflowError } from "../ui/storage.js";
 
+const protectedSecret = z.object({ format: z.enum(["windows-dpapi", "owner-file"]), value: z.string().min(1).max(16384) });
 const credentialSchema = z.object({
   version: z.literal(1), server: z.string(), connectionId: z.string().uuid(),
   expiresAt: z.string().datetime({ offset: true }), designIds: z.array(z.string().regex(/^D[A-Za-z0-9_-]{10}$/)).min(1).max(20),
   scopes: z.array(z.enum(["design.read", "design.submit"])),
-  secret: z.object({ format: z.enum(["windows-dpapi", "owner-file"]), value: z.string().min(1).max(16384) }),
+  secret: protectedSecret, refreshSecret: protectedSecret.optional(), pendingRefresh: protectedSecret.optional(),
+  refreshExpiresAt: z.string().datetime({ offset: true }).optional(),
 });
 type Credential = z.infer<typeof credentialSchema>;
 const exchangeSchema = z.object({
   connectionId: z.string().uuid(), accessToken: z.string().regex(/^uid_[A-Za-z0-9_-]{43}$/), tokenType: z.literal("Bearer"),
   expiresAt: z.string().datetime({ offset: true }), designIds: credentialSchema.shape.designIds, scopes: credentialSchema.shape.scopes,
+  refreshToken: z.string().regex(/^uir_[A-Za-z0-9_-]{43}$/).optional(), refreshExpiresAt: z.string().datetime({ offset: true }).optional(),
 });
 const contextSchema = z.object({
   designId: z.string(), title: z.string(), accessRole: z.string(), nativeSequence: z.number().int().nonnegative(),
@@ -106,49 +110,103 @@ async function boundedJson(response: Response, maximum: number): Promise<unknown
   } catch (error) { if (error instanceof UiWorkflowError) throw error; return fail("PLATFORM_RESPONSE_INVALID", "Platform returned invalid JSON."); }
   finally { reader.releaseLock(); }
 }
+async function protect(value: string): Promise<Credential["secret"]> {
+  return process.platform === "win32" ? { format: "windows-dpapi", value: await dpapi(value, false) } : { format: "owner-file", value };
+}
+async function reveal(secret: Credential["secret"]): Promise<string> {
+  return secret.format === "windows-dpapi" ? dpapi(secret.value, true) : secret.value;
+}
+async function credentialLock(workspace: Workspace): Promise<string> {
+  const dir = await containedPath(await stateRoot(workspace), "connection-lock");
+  await fs.mkdir(dir, { recursive: true, mode: 0o700 }); return dir;
+}
 function publicConnection(credential: Credential) {
   return { connected: true, server: credential.server, connectionId: credential.connectionId,
+    renewable: !!credential.refreshSecret, refreshExpiresAt: credential.refreshExpiresAt, verified: false,
     expiresAt: credential.expiresAt, expired: Date.parse(credential.expiresAt) <= Date.now(), designIds: credential.designIds, scopes: credential.scopes };
 }
 export async function platformStatus(workspace: Workspace) {
   const credential = await readCredential(workspace); return credential ? publicConnection(credential) : { connected: false };
 }
-export async function pairPlatform(workspace: Workspace, server: string, pairingCode: string) {
+export async function pairPlatform(workspace: Workspace, server: string, pairingCode: string, replace = false) {
   server = normalizePlatformServer(server);
   if (!/^[A-Za-z0-9_-]{43}$/.test(pairingCode)) return fail("INVALID_PAIRING_CODE", "Use the current one-time code from the platform.");
-  const root = await stateRoot(workspace);
-  return withLock(root, async () => {
-    if (await readCredential(workspace)) return fail("PLATFORM_ALREADY_CONNECTED", "Disconnect the existing platform connection before pairing another one.");
+  return withLock(await credentialLock(workspace), async () => {
+    const previous = await readCredential(workspace);
+    if (previous && !replace) return fail("PLATFORM_ALREADY_CONNECTED", "Disconnect or locally forget the existing connection before pairing another one.");
+    if (previous && previous.server !== server) return fail("PLATFORM_SERVER_CHANGED", "Disconnect before choosing a different platform.");
     // Verify protected storage before consuming the one-time code.
     if (process.platform === "win32") await dpapi("storage-check", false);
     const value = exchangeSchema.safeParse(await request(server, "/connections/exchange", "POST", { pairingCode }));
     if (!value.success) return fail("PLATFORM_RESPONSE_INVALID", "The platform returned an invalid connection.");
     const credential: Credential = { version: 1, server, connectionId: value.data.connectionId, expiresAt: value.data.expiresAt,
-      designIds: value.data.designIds, scopes: value.data.scopes, secret: process.platform === "win32"
-        ? { format: "windows-dpapi", value: await dpapi(value.data.accessToken, false) }
-        : { format: "owner-file", value: value.data.accessToken } };
+      designIds: value.data.designIds, scopes: value.data.scopes, secret: await protect(value.data.accessToken),
+      ...(value.data.refreshToken ? { refreshSecret: await protect(value.data.refreshToken), refreshExpiresAt: value.data.refreshExpiresAt } : {}) };
     await atomicJson(await credentialFile(workspace), credential);
     return publicConnection(credential);
   });
 }
+/** Keeps a pending rotation through network loss and process restarts. Never retries a design mutation. */
+async function refreshedCredential(workspace: Workspace): Promise<Credential> {
+  const current = await readCredential(workspace);
+  if (!current) return fail("PLATFORM_NOT_CONNECTED", "Pair this workspace with the platform using the local c2c ui-design connect command.");
+  if (!current.pendingRefresh && Date.parse(current.expiresAt) > Date.now() + 120000) return current;
+  if (!current.refreshSecret || !current.refreshExpiresAt || Date.parse(current.refreshExpiresAt) <= Date.now()) {
+    if (Date.parse(current.expiresAt) > Date.now()) return current;
+    return fail("PLATFORM_CONNECTION_EXPIRED", "The renewable grant expired. Locally forget this connection and pair again.");
+  }
+  return withLock(await credentialLock(workspace), async () => {
+    const credential = await readCredential(workspace);
+    if (!credential) return fail("PLATFORM_NOT_CONNECTED", "Pair this workspace locally.");
+    if (!credential.pendingRefresh && Date.parse(credential.expiresAt) > Date.now() + 120000) return credential;
+    if (!credential.refreshSecret) return fail("PLATFORM_CONNECTION_EXPIRED", "Pair this workspace locally.");
+    if (!credential.pendingRefresh) {
+      credential.pendingRefresh = await protect("uir_" + randomBytes(32).toString("base64url"));
+      await atomicJson(await credentialFile(workspace), credential);
+    }
+    const next = await reveal(credential.pendingRefresh);
+    const value = exchangeSchema.safeParse(await request(credential.server, "/connections/refresh", "POST", {
+      refreshToken: await reveal(credential.refreshSecret), nextRefreshToken: next,
+    }));
+    if (!value.success || value.data.connectionId !== credential.connectionId || value.data.refreshToken !== next
+        || !value.data.refreshExpiresAt || JSON.stringify(value.data.designIds) !== JSON.stringify(credential.designIds)
+        || JSON.stringify(value.data.scopes) !== JSON.stringify(credential.scopes))
+      return fail("PLATFORM_RESPONSE_INVALID", "The refreshed grant differs from the saved connection.");
+    credential.secret = await protect(value.data.accessToken);
+    credential.refreshSecret = credential.pendingRefresh; delete credential.pendingRefresh;
+    credential.expiresAt = value.data.expiresAt; credential.refreshExpiresAt = value.data.refreshExpiresAt;
+    await atomicJson(await credentialFile(workspace), credential); return credential;
+  });
+}
 async function connected(workspace: Workspace, design?: string, scope: "design.read" | "design.submit" = "design.read") {
-  const credential = await readCredential(workspace);
-  if (!credential) return fail("PLATFORM_NOT_CONNECTED", "Pair this workspace with the platform using the local c2c ui-design connect command.");
-  if (Date.parse(credential.expiresAt) <= Date.now()) return fail("PLATFORM_CONNECTION_EXPIRED", "Pair a new platform connection locally.");
+  const credential = await refreshedCredential(workspace);
   if (design && (!/^D[A-Za-z0-9_-]{10}$/.test(design) || !credential.designIds.includes(design) || !credential.scopes.includes(scope)))
     return fail("PLATFORM_SCOPE", "This connection does not allow the requested design operation.");
-  const token = credential.secret.format === "windows-dpapi" ? await dpapi(credential.secret.value, true) : credential.secret.value;
+  const token = await reveal(credential.secret);
   if (!/^uid_[A-Za-z0-9_-]{43}$/.test(token)) return fail("PLATFORM_CONNECTION_INVALID", "Pair this workspace again locally.");
   return { credential, token };
 }
+/** Explicit local recovery also works for expired/revoked/corrupt grants. It does not claim remote revocation. */
+export async function forgetPlatform(workspace: Workspace) {
+  return withLock(await credentialLock(workspace), async () => {
+    await fs.rm(await credentialFile(workspace), { force: true }); return { disconnected: true, revoked: false, locallyForgotten: true };
+  });
+}
 export async function disconnectPlatform(workspace: Workspace) {
-  const root = await stateRoot(workspace);
-  return withLock(root, async () => {
-    if (!await readCredential(workspace)) return { disconnected: true };
-    const { credential, token } = await connected(workspace);
+  if (!await readCredential(workspace)) return { disconnected: true };
+  const { credential, token } = await connected(workspace);
+  return withLock(await credentialLock(workspace), async () => {
+    if ((await readCredential(workspace))?.connectionId !== credential.connectionId)
+      return fail("PLATFORM_CONNECTION_CHANGED", "The connection changed; inspect its status before retrying.");
     await request(credential.server, "/connections/current", "DELETE", undefined, token);
     await fs.unlink(await credentialFile(workspace)); return { disconnected: true, revoked: true };
   });
+}
+/** Relay transport cannot choose an origin or an arbitrary platform operation. */
+export async function platformRelayRequest(workspace: Workspace, route: string, body?: unknown) {
+  if (!/^\/(?:register|poll|heartbeat|status|pair|complete\/[a-f0-9-]{36})$/.test(route)) return fail("INVALID_RELAY_ROUTE", "Invalid relay operation.");
+  const { credential, token } = await connected(workspace);
+  return request(credential.server, "/relay" + route, route === "/status" ? "GET" : "POST", body, token);
 }
 export async function platformSpecification(workspace: Workspace, section: SpecSection = "summary") {
   const { credential, token } = await connected(workspace);
@@ -202,6 +260,12 @@ export async function platformIntakeRequest(workspace: Workspace, design: string
     return fail("INVALID_SUBMISSION_ROUTE", "Invalid submission operation.");
   const { credential, token } = await connected(workspace, design, method === "GET" ? "design.read" : "design.submit");
   return request(credential.server, "/designs/" + design + suffix, method, body, token);
+}
+
+/** Ordinary Chat transport only: snapshot inputs and receive a validated result. */
+export async function platformWebChatRequest(workspace: Workspace, design: string, operation: "input" | "receive" | "status", body: unknown) {
+  const { credential, token } = await connected(workspace, design, operation === "receive" ? "design.submit" : "design.read");
+  return request(credential.server, "/designs/" + design + "/web-chat/" + operation, "POST", body, token);
 }
 
 /** Export authorization is design.read: an export never edits the design. */

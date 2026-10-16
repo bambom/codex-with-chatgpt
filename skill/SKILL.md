@@ -10,6 +10,15 @@ description: >
 
 # Codex with ChatGPT
 
+For an existing UI Design desktop workspace, read
+[the AI-operated ChatGPT connection flow](references/ui-design-chatgpt.md) first.
+That mode uses the desktop binding and fixed platform entry; its connection,
+recovery and verification steps override the generic setup/doctor flow below.
+Do not add OpenAI Platform keys or switch connection architecture automatically.
+UI Design uses ordinary web Chat as its only image/design producer and exposes
+the 13 base workspace tools plus split-image and modify-design as its two design business tools. Do not run local image
+production or the generic coding planner loop for that product workflow.
+
 ChatGPT thinks. Codex works.
 
 You (Codex) own execution: editing, shell, git, tests, recovery.

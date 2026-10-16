@@ -86,7 +86,10 @@ export function gitStatus(target: GitTarget): GitStatusResult {
     conflicted: [],
     hidden: { changes: 0, conflicts: 0 },
   };
-  const result = runGit(root, ["status", "--porcelain=v2", "--branch", "--", "."]);
+  // An entirely untracked workspace subtree otherwise collapses to "./".
+  // Enumerate files so paths remain workspace-relative and sensitive entries
+  // are checked individually instead of being hidden inside directory names.
+  const result = runGit(root, ["status", "--porcelain=v2", "--branch", "--untracked-files=all", "--", "."]);
   if (!result.ok) return empty;
   const out: GitStatusResult = { ...empty, hidden: { ...empty.hidden }, isRepo: true };
   const withheld = (paths: string[]): boolean => paths.some((p) => ignoreRules.isSensitive(p));
