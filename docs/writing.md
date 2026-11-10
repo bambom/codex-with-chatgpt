@@ -25,8 +25,8 @@ revoke existing access when requested.
   single existing file, applied sequentially. Each old_text must match once only.
   All edits are validated before writing. This is not unified-diff syntax.
 - `run_command(command, cwd='.', timeout_ms=30000)`: PowerShell on Windows, sh on
-  Unix, with a 120-second maximum timeout and capped combined output. Returns exit
-  status, timeout and truncation flags. Nonzero exit means the command failed.
+  Unix, with a 3-hour (10800 s) maximum timeout and capped combined output. Returns
+  exit status, timeout and truncation flags. Nonzero exit means the command failed.
 
 Write tools require `workspace.write`; command execution requires
 `workspace.execute`. Mutating tool annotations let ChatGPT present its normal

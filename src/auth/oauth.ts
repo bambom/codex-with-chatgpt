@@ -39,6 +39,13 @@ function isAllowedRedirectUri(uri: string): boolean {
   return false;
 }
 
+/** `res.redirect` content-negotiates via the Accept header and throws on
+ *  malformed values (seen from ChatGPT's connector OAuth client). */
+function safeRedirect(res: Response, location: string): void {
+  res.setHeader("Location", location);
+  res.status(302).type("text/plain").send(`Redirecting to ${location}`);
+}
+
 function authorizationServerMetadata(base: string): Record<string, unknown> {
   return {
     issuer: base,
@@ -213,7 +220,7 @@ export function createOAuthRouter(deps: OAuthDeps): Router {
       url.searchParams.set("error", error);
       url.searchParams.set("error_description", description);
       if (query.state) url.searchParams.set("state", query.state);
-      res.redirect(url.toString());
+      safeRedirect(res, url.toString());
     };
     if (query.response_type !== "code") {
       fail("unsupported_response_type", "Only response_type=code is supported");
@@ -288,7 +295,7 @@ export function createOAuthRouter(deps: OAuthDeps): Router {
     const url = new URL(request.redirectUri);
     url.searchParams.set("code", code);
     if (request.state) url.searchParams.set("state", request.state);
-    res.redirect(url.toString());
+    safeRedirect(res, url.toString());
   });
 
   // ---- Token endpoint --------------------------------------------------------

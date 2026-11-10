@@ -81,7 +81,7 @@ export async function runCommand(workspace: Workspace, command: string, cwd = ".
         const killer = spawn("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true });
         killer.on("error", () => child.kill());
       } else if (child.pid) { try { process.kill(-child.pid, "SIGKILL"); } catch { child.kill(); } }
-    }, Math.min(120000, Math.max(100, timeoutMs)));
+    }, Math.min(10800000, Math.max(100, timeoutMs)));
     child.on("error", error => { clearTimeout(timer); reject(error); });
     child.on("close", (exitCode, signal) => { clearTimeout(timer); resolve({ exitCode, signal, timedOut, truncated, output: redact(output) }); });
   });
